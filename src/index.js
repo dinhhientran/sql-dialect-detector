@@ -1,14 +1,14 @@
 // src/index.js
-import AutoFitGrid from './AutoFitGrid.js';
+import SQLDialectDetector from './SQLDialectDetector.js';
 
 // Export for Node.js and ES6 import
 if (typeof module !== 'undefined' && module.exports) {
     // Node.js environment
-    module.exports = AutoFitGrid;
+    module.exports = SQLDialectDetector;
 } else if (typeof define === 'function' && define.amd) {
     // AMD support
-    define([], () => AutoFitGrid);
+    define([], () => SQLDialectDetector);
 } else {
     // Browser globals
-    window.AutoFitGrid = AutoFitGrid; // Make it globally available
+    root.SQLDialectDetector = SQLDialectDetector; // Make it globally available
 }

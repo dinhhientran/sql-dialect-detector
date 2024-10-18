@@ -1,7 +1,7 @@
 {
-  "name": "auto-fit-grid",
-  "version": "1.0.3",
-  "description": "A robust JavaScript library for dynamically adjusting grid column widths based on content.",
+  "name": "sql-dialect-detector",
+  "version": "1.0.1",
+  "description": "A JavaScript library for detecting SQL dialects based on query analysis, including keywords, expressions, and structures.",
   "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
@@ -10,13 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dinhhientran/auto-fit-grid.git"
+    "url": "git+https://github.com/dinhhientran/sql-dialect-detector.git"
   },
   "keywords": [
-    "grid",
-    "layout",
-    "dynamic",
-    "column width",
+    "sql",
+    "dialect",
+    "detector",
+    "database",
+    "query analysis",
     "javascript"
   ],
   "author": "Hien Tran",
@@ -30,11 +31,13 @@
     "webpack": "^5.93.0",
     "webpack-cli": "^5.1.4"
   },
-  "dependencies": {},
-  "bugs": {
-    "url": "https://github.com/dinhhientran/auto-fit-grid/issues"
+  "dependencies": {
+    "node-sql-parser": "^5.3.1"
   },
-  "homepage": "https://autofitgrid.codeutility.io",
+  "bugs": {
+    "url": "https://github.com/dinhhientran/sql-dialect-detector/issues"
+  },
+  "homepage": "https://sqldetector.codeutility.io",
   "directories": {
     "doc": "docs"
   }

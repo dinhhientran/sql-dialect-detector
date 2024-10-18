@@ -1,0 +1,1202 @@
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        // Node. Does not work with strict CommonJS, but only CommonJS-like environments that support module.exports, like Node.
+        module.exports = factory();
+    } else {
+        // Browser globals (root is window)
+        root.SQLDialectDetector = factory();
+    }
+}(typeof self !== 'undefined' ? self : this, function () {
+
+    class SQLDialectDetector {
+        // Define constants within the class
+        // Keywords for each DB
+        static keywordDBMapping = {
+            postgresql: [
+                'ABORT', 'ABSOLUTE', 'ACCESS', 'ACTION', 'ADD', 'ADMIN', 'AFTER', 'AGGREGATE',
+                'ALL', 'ALSO', 'ALTER', 'ANALYSE', 'ANALYZE', 'AND', 'ANY', 'ARRAY', 'AS',
+                'ASC', 'ASSERTION', 'ASSIGNMENT', 'ASYMMETRIC', 'AT', 'AUTHORIZATION', 'BACKWARD',
+                'BEFORE', 'BEGIN', 'BETWEEN', 'BIGINT', 'BINARY', 'BIT', 'BOOLEAN', 'BOTH',
+                'BY', 'CACHE', 'CALL', 'CALLED', 'CASCADE', 'CASCADED', 'CASE', 'CAST',
+                'CATALOG', 'CHAIN', 'CHAR', 'CHARACTER', 'CHARACTERISTICS', 'CHECK', 'CHECKPOINT',
+                'CLASS', 'CLOSE', 'CLUSTER', 'COALESCE', 'COLLATE', 'COLLATION', 'COLUMN',
+                'COMMENT', 'COMMIT', 'COMMITTED', 'CONCURRENTLY', 'CONFIGURATION', 'CONFLICT',
+                'CONNECT', 'CONNECTION', 'CONSTRAINT', 'CONSTRAINTS', 'CONTENT', 'CONTINUE',
+                'CONVERSION', 'COPY', 'COST', 'CREATE', 'CROSS', 'CSV', 'CUBE', 'CURRENT',
+                'CURRENT_CATALOG', 'CURRENT_DATE', 'CURRENT_ROLE', 'CURRENT_SCHEMA', 'CURRENT_TIME',
+                'CURRENT_TIMESTAMP', 'CURRENT_USER', 'CURSOR', 'CYCLE', 'DATA', 'DATABASE',
+                'DAY', 'DEALLOCATE', 'DEC', 'DECIMAL', 'DECLARE', 'DEFAULT', 'DEFAULTS',
+                'DEFERRABLE', 'DEFERRED', 'DEFINER', 'DELETE', 'DELIMITER', 'DELIMITERS',
+                'DESC', 'DICTIONARY', 'DISABLE', 'DISCARD', 'DISTINCT', 'DO', 'DOCUMENT',
+                'DOMAIN', 'DOUBLE', 'DROP', 'EACH', 'ELSE', 'ENABLE', 'ENCODING', 'ENCRYPTED',
+                'END', 'ESCAPE', 'EVENT', 'EXCEPT', 'EXCLUDE', 'EXCLUDING', 'EXCLUSIVE',
+                'EXECUTE', 'EXISTS', 'EXPLAIN', 'EXTENSION', 'EXTERNAL', 'EXTRACT', 'FALSE',
+                'FAMILY', 'FETCH', 'FILTER', 'FIRST', 'FLOAT', 'FOLLOWING', 'FOR', 'FORCE',
+                'FOREIGN', 'FORWARD', 'FREEZE', 'FROM', 'FULL', 'FUNCTION', 'FUNCTIONS',
+                'GLOBAL', 'GRANT', 'GRANTED', 'GREATEST', 'GROUP', 'HANDLER', 'HAVING',
+                'HEADER', 'HOLD', 'HOUR', 'IDENTITY', 'IF', 'ILIKE', 'IMMEDIATE', 'IMMUTABLE',
+                'IMPLICIT', 'IMPORT', 'IN', 'INCLUDE', 'INCLUDING', 'INCREMENT', 'INDEX',
+                'INDEXES', 'INHERIT', 'INHERITS', 'INLINE', 'INNER', 'INOUT', 'INPUT',
+                'INSENSITIVE', 'INSERT', 'INSTEAD', 'INT', 'INTEGER', 'INTERSECT', 'INTERVAL',
+                'INTO', 'INVOKER', 'IS', 'ISNULL', 'ISOLATION', 'JOIN', 'KEY', 'LABEL',
+                'LANGUAGE', 'LARGE', 'LAST', 'LATERAL', 'LEADING', 'LEAKPROOF', 'LEAST',
+                'LEFT', 'LEVEL', 'LIKE', 'LIMIT', 'LISTEN', 'LOAD', 'LOCAL', 'LOCALTIME',
+                'LOCALTIMESTAMP', 'LOCATION', 'LOCK', 'LOCKED', 'LOGGED', 'MAPPING', 'MATCH',
+                'MATERIALIZED', 'MAXVALUE', 'METHOD', 'MINUTE', 'MINVALUE', 'MODE', 'MONTH',
+                'MOVE', 'NAME', 'NAMES', 'NATIONAL', 'NATURAL', 'NCHAR', 'NEW', 'NEXT',
+                'NO', 'NONE', 'NOT', 'NOTHING', 'NOTIFY', 'NOTNULL', 'NOWAIT', 'NULL',
+                'NULLIF', 'NUMERIC', 'OBJECT', 'OF', 'OFF', 'OFFSET', 'OIDS', 'OLD', 'ON',
+                'ONLY', 'OPERATOR', 'OPTION', 'OPTIONS', 'OR', 'ORDER', 'ORDINALITY', 'OTHERS',
+                'OUT', 'OUTER', 'OVER', 'OVERLAPS', 'OVERLAY', 'OVERRIDING', 'OWNED',
+                'OWNER', 'PARSER', 'PARTIAL', 'PARTITION', 'PASSING', 'PASSWORD', 'PLACING',
+                'PLANS', 'POSITION', 'PRECEDING', 'PRECISION', 'PREPARE', 'PREPARED',
+                'PRESERVE', 'PRIMARY', 'PRIOR', 'PRIVILEGES', 'PROCEDURAL', 'PROCEDURE',
+                'PROCEDURES', 'QUOTE', 'RANGE', 'READ', 'REAL', 'REASSIGN', 'RECHECK',
+                'RECURSIVE', 'REF', 'REFERENCES', 'REFERENCING', 'REFRESH', 'REINDEX',
+                'RELATIVE', 'RELEASE', 'RENAME', 'REPEATABLE', 'REPLACE', 'REPLICA',
+                'RESET', 'RESTART', 'RESTRICT', 'RETURN', 'RETURNING', 'RETURNS', 'REVOKE',
+                'RIGHT', 'ROLE', 'ROLLBACK', 'ROLLUP', 'ROUTINE', 'ROUTINES', 'ROW',
+                'ROWS', 'RULE', 'SAVEPOINT', 'SCHEMA', 'SCHEMAS', 'SCROLL', 'SEARCH',
+                'SECOND', 'SECURITY', 'SELECT', 'SEQUENCE', 'SEQUENCES', 'SERIALIZABLE',
+                'SERVER', 'SESSION', 'SESSION_USER', 'SET', 'SETOF', 'SHARE', 'SHOW',
+                'SIMILAR', 'SIMPLE', 'SMALLINT', 'SNAPSHOT', 'SOME', 'SQL', 'STABLE',
+                'STANDALONE', 'START', 'STATEMENT', 'STATISTICS', 'STDIN', 'STDOUT',
+                'STORAGE', 'STORED', 'STRICT', 'STRIP', 'SUBSCRIPTION', 'SUBSTRING',
+                'SUPPORT', 'SYMMETRIC', 'SYSID', 'SYSTEM', 'TABLE', 'TABLES', 'TABLESPACE',
+                'TEMP', 'TEMPLATE', 'TEMPORARY', 'TEXT', 'THEN', 'TIME', 'TIMESTAMP',
+                'TO', 'TRAILING', 'TRANSACTION', 'TRANSFORM', 'TRANSFORMS', 'TRANSLATE',
+                'TREAT', 'TRIGGER', 'TRIM', 'TRUE', 'TRUNCATE', 'TRUSTED', 'TYPE',
+                'TYPES', 'UNBOUNDED', 'UNCOMMITTED', 'UNENCRYPTED', 'UNION', 'UNIQUE',
+                'UNKNOWN', 'UNLISTEN', 'UNLOGGED', 'UNTIL', 'UPDATE', 'USER', 'USING',
+                'VACUUM', 'VALID', 'VALIDATE', 'VALIDATOR', 'VALUE', 'VALUES', 'VARCHAR',
+                'VARIADIC', 'VARYING', 'VERBOSE', 'VERSION', 'VIEW', 'VIEWS', 'VOLATILE',
+                'WHEN', 'WHERE', 'WHITESPACE', 'WINDOW', 'WITH', 'WITHIN', 'WITHOUT',
+                'WORK', 'WRAPPER', 'WRITE', 'XML', 'XMLATTRIBUTES', 'XMLCONCAT', 'XMLELEMENT',
+                'XMLEXISTS', 'XMLFOREST', 'XMLNAMESPACES', 'XMLPARSE', 'XMLPI', 'XMLROOT',
+                'XMLSERIALIZE', 'XMLTABLE', 'YEAR', 'ZONE'
+            ],
+
+            mysql: [
+                'ACCESSIBLE', 'ACCOUNT', 'ACTION', 'ADD', 'AFTER', 'AGAINST', 'AGGREGATE',
+                'ALGORITHM', 'ALL', 'ALTER', 'ALWAYS', 'ANALYZE', 'AND', 'ANY', 'AS',
+                'ASC', 'ASCII', 'ASENSITIVE', 'AT', 'AUTOEXTEND_SIZE', 'AUTO_INCREMENT',
+                'AVG', 'AVG_ROW_LENGTH', 'BACKUP', 'BEFORE', 'BEGIN', 'BETWEEN', 'BIGINT',
+                'BINARY', 'BINLOG', 'BIT', 'BLOB', 'BLOCK', 'BOOL', 'BOOLEAN', 'BOTH',
+                'BTREE', 'BY', 'BYTE', 'CACHE', 'CALL', 'CASCADE', 'CASCADED', 'CASE',
+                'CATALOG_NAME', 'CHAIN', 'CHANGE', 'CHANGED', 'CHANNEL', 'CHAR', 'CHARACTER',
+                'CHARSET', 'CHECK', 'CHECKSUM', 'CIPHER', 'CLASS_ORIGIN', 'CLIENT',
+                'CLONE', 'CLOSE', 'COALESCE', 'CODE', 'COLLATE', 'COLLATION', 'COLUMN',
+                'COLUMNS', 'COLUMN_FORMAT', 'COLUMN_NAME', 'COMMENT', 'COMMIT', 'COMMITTED',
+                'COMPACT', 'COMPLETION', 'COMPONENT', 'COMPRESSED', 'COMPRESSION',
+                'CONCURRENT', 'CONDITION', 'CONNECTION', 'CONSISTENT', 'CONSTRAINT',
+                'CONSTRAINT_CATALOG', 'CONSTRAINT_NAME', 'CONSTRAINT_SCHEMA', 'CONTAINS',
+                'CONTEXT', 'CONTINUE', 'CONVERT', 'CPU', 'CREATE', 'CROSS', 'CUBE',
+                'CURRENT', 'CURRENT_DATE', 'CURRENT_ROLE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP',
+                'CURRENT_USER', 'CURSOR', 'CURSOR_NAME', 'DATA', 'DATABASE', 'DATABASES',
+                'DATAFILE', 'DATE', 'DATETIME', 'DAY', 'DAY_HOUR', 'DAY_MICROSECOND',
+                'DAY_MINUTE', 'DAY_SECOND', 'DEALLOCATE', 'DEC', 'DECIMAL', 'DECLARE',
+                'DEFAULT', 'DEFAULT_AUTH', 'DEFINER', 'DELAYED', 'DELAY_KEY_WRITE',
+                'DELETE', 'DENSE_RANK', 'DESC', 'DESCRIBE', 'DESCRIPTION', 'DES_KEY_FILE',
+                'DETERMINISTIC', 'DIAGNOSTICS', 'DIRECTORY', 'DISABLE', 'DISCARD',
+                'DISK', 'DISTINCT', 'DISTINCTROW', 'DIV', 'DO', 'DOUBLE', 'DROP',
+                'DUAL', 'DUMPFILE', 'DUPLICATE', 'DYNAMIC', 'EACH', 'ELSE', 'ELSEIF',
+                'EMPTY', 'ENABLE', 'ENCLOSED', 'ENCRYPTION', 'END', 'ENDS', 'ENGINE',
+                'ENGINES', 'ENUM', 'ERROR', 'ERRORS', 'ESCAPE', 'ESCAPED', 'EVENT',
+                'EVENTS', 'EVERY', 'EXCEPT', 'EXCHANGE', 'EXCLUDE', 'EXECUTE', 'EXISTS',
+                'EXIT', 'EXPANSION', 'EXPIRE', 'EXPLAIN', 'EXPORT', 'EXTENDED', 'EXTENT_SIZE',
+                'FALSE', 'FAST', 'FAULTS', 'FETCH', 'FIELDS', 'FILE', 'FILE_BLOCK_SIZE',
+                'FILTER', 'FIRST', 'FIRST_VALUE', 'FIXED', 'FLOAT', 'FLOAT4', 'FLOAT8',
+                'FLUSH', 'FOLLOWING', 'FOLLOWS', 'FOR', 'FORCE', 'FOREIGN', 'FORMAT',
+                'FOUND', 'FROM', 'FULL', 'FULLTEXT', 'FUNCTION', 'GENERAL', 'GENERATED',
+                'GEOMCOLLECTION', 'GEOMETRY', 'GEOMETRYCOLLECTION', 'GET', 'GET_FORMAT',
+                'GET_MASTER_PUBLIC_KEY', 'GET_SOURCE_PUBLIC_KEY', 'GLOBAL', 'GRANT',
+                'GRANTS', 'GROUP', 'GROUPING', 'GROUPS', 'GROUP_REPLICATION', 'HANDLER',
+                'HASH', 'HAVING', 'HELP', 'HIGH_PRIORITY', 'HISTOGRAM', 'HISTORY',
+                'HOST', 'HOSTS', 'HOUR', 'HOUR_MICROSECOND', 'HOUR_MINUTE', 'HOUR_SECOND',
+                'IDENTIFIED', 'IF', 'IGNORE', 'IGNORE_SERVER_IDS', 'IMPORT', 'IN',
+                'INACTIVE', 'INDEX', 'INDEXES', 'INFILE', 'INITIAL_SIZE', 'INNER',
+                'INOUT', 'INSENSITIVE', 'INSERT', 'INSERT_METHOD', 'INSTALL', 'INSTANCE',
+                'INT', 'INT1', 'INT2', 'INT3', 'INT4', 'INT8', 'INTEGER', 'INTERVAL',
+                'INTO', 'INVISIBLE', 'INVOKER', 'IO', 'IO_AFTER_GTIDS', 'IO_BEFORE_GTIDS',
+                'IO_THREAD', 'IPC', 'IS', 'ISOLATION', 'ISSUER', 'ITERATE', 'JOIN',
+                'JSON', 'JSON_TABLE', 'JSON_VALUE', 'KEY', 'KEYRING', 'KEYS', 'KEY_BLOCK_SIZE',
+                'KILL', 'LAG', 'LANGUAGE', 'LAST', 'LAST_VALUE', 'LATERAL', 'LEAD',
+                'LEADING', 'LEAVE', 'LEAVES', 'LEFT', 'LESS', 'LEVEL', 'LIKE', 'LIMIT',
+                'LINEAR', 'LINES', 'LIST', 'LOAD', 'LOCAL', 'LOCALTIME', 'LOCALTIMESTAMP',
+                'LOCK', 'LOCKED', 'LOCKS', 'LOGFILE', 'LOGS', 'LONG', 'LONGBLOB',
+                'LONGTEXT', 'LOOP', 'LOW_PRIORITY', 'MASTER', 'MASTER_AUTO_POSITION',
+                'MASTER_BIND', 'MASTER_COMPRESSION_ALGORITHMS', 'MASTER_CONNECT_RETRY',
+                'MASTER_DELAY', 'MASTER_HEARTBEAT_PERIOD', 'MASTER_HOST', 'MASTER_LOG_FILE',
+                'MASTER_LOG_POS', 'MASTER_PASSWORD', 'MASTER_PORT', 'MASTER_PUBLIC_KEY_PATH',
+                'MASTER_RETRY_COUNT', 'MASTER_SERVER_ID', 'MASTER_SSL', 'MASTER_SSL_CA',
+                'MASTER_SSL_CAPATH', 'MASTER_SSL_CERT', 'MASTER_SSL_CIPHER', 'MASTER_SSL_CRL',
+                'MASTER_SSL_CRLPATH', 'MASTER_SSL_KEY', 'MASTER_SSL_VERIFY_SERVER_CERT',
+                'MASTER_TLS_CIPHERSUITES', 'MASTER_TLS_VERSION', 'MASTER_USER', 'MATCH',
+                'MAXVALUE', 'MAX_CONNECTIONS_PER_HOUR', 'MAX_QUERIES_PER_HOUR', 'MAX_ROWS',
+                'MAX_SIZE', 'MAX_UPDATES_PER_HOUR', 'MAX_USER_CONNECTIONS', 'MEDIUM',
+                'MEDIUMBLOB', 'MEDIUMINT', 'MEDIUMTEXT', 'MEMORY', 'MERGE', 'MESSAGE_TEXT',
+                'MICROSECOND', 'MIDDLEINT', 'MIGRATE', 'MINUTE', 'MINUTE_MICROSECOND',
+                'MINUTE_SECOND', 'MOD', 'MODE', 'MODIFIES', 'MODIFY', 'MONTH', 'MULTILINESTRING',
+                'MULTIPOINT', 'MULTIPOLYGON', 'MUTEX', 'MYSQL_ERRNO', 'NAME', 'NAMES',
+                'NATIONAL', 'NATURAL', 'NCHAR', 'NDB', 'NDBCLUSTER', 'NESTED', 'NETWORK_NAMESPACE',
+                'NEVER', 'NEW', 'NEXT', 'NO', 'NODEGROUP', 'NONE', 'NOT', 'NOWAIT',
+                'NO_WRITE_TO_BINLOG', 'NTH_VALUE', 'NTILE', 'NULL', 'NULLS', 'NUMBER',
+                'NUMERIC', 'NVARCHAR', 'OF', 'OFF', 'OFFSET', 'OJ', 'OLD', 'ON', 'ONE',
+                'ONLY', 'OPEN', 'OPTIMIZE', 'OPTIMIZER_COSTS', 'OPTION', 'OPTIONALLY',
+                'OPTIONS', 'OR', 'ORDER', 'ORDINALITY', 'ORGANIZATION', 'OTHERS', 'OUT',
+                'OUTER', 'OUTFILE', 'OVER', 'OWNER', 'PACK_KEYS', 'PAGE', 'PARSER',
+                'PARSE_GCOL_EXPR', 'PARTIAL', 'PARTITION', 'PARTITIONING', 'PARTITIONS',
+                'PASSWORD', 'PASSWORD_LOCK_TIME', 'PATH', 'PERCENT_RANK', 'PERSIST',
+                'PERSIST_ONLY', 'PHASE', 'PLUGIN', 'PLUGINS', 'PLUGIN_DIR', 'POINT',
+                'POLYGON', 'PORT', 'PRECEDES', 'PRECEDING', 'PRECISION', 'PREPARE',
+                'PRESERVE', 'PREV', 'PRIMARY', 'PRIVILEGES', 'PRIVILEGE_CHECKS_USER',
+                'PROCEDURE', 'PROCESS', 'PROCESSLIST', 'PROFILE', 'PROFILES', 'PROXY',
+                'PURGE', 'QUARTER', 'QUERY', 'QUICK', 'RANDOM', 'RANK', 'REBUILD',
+                'RECOVER', 'RECURSIVE', 'REDOFILE', 'REDO_BUFFER_SIZE', 'REDUNDANT',
+                'REFERENCE', 'REFERENCES', 'REGEXP', 'RELAY', 'RELAYLOG', 'RELAY_LOG_FILE',
+                'RELAY_LOG_POS', 'RELAY_THREAD', 'RELEASE', 'RELOAD', 'REMOTE', 'REMOVE',
+                'RENAME', 'REORGANIZE', 'REPAIR', 'REPEAT', 'REPEATABLE', 'REPLACE',
+                'REPLICA', 'REPLICAS', 'REPLICATE_DO_DB', 'REPLICATE_DO_TABLE', 'REPLICATE_IGNORE_DB',
+                'REPLICATE_IGNORE_TABLE', 'REPLICATE_REWRITE_DB', 'REPLICATE_WILD_DO_TABLE',
+                'REPLICATE_WILD_IGNORE_TABLE', 'REPLICATION', 'REQUIRE', 'REQUIRE_ROW_FORMAT',
+                'RESET', 'RESIGNAL', 'RESOURCE', 'RESPECT', 'RESTART', 'RESTORE', 'RESTRICT',
+                'RESUME', 'RETAIN', 'RETURN', 'RETURNED_SQLSTATE', 'RETURNING', 'RETURNS',
+                'REUSE', 'REVERSE', 'REVOKE', 'RIGHT', 'RLIKE', 'ROLE', 'ROLLBACK',
+                'ROLLUP', 'ROTATE', 'ROUTINE', 'ROW', 'ROWS', 'ROW_COUNT', 'ROW_FORMAT',
+                'ROW_NUMBER', 'RTREE', 'SAVEPOINT', 'SCHEDULE', 'SCHEMA', 'SCHEMAS',
+                'SCHEMA_NAME', 'SECOND', 'SECONDARY', 'SECONDARY_ENGINE', 'SECONDARY_ENGINE_ATTRIBUTE',
+                'SECONDARY_LOAD', 'SECONDARY_UNLOAD', 'SECOND_MICROSECOND', 'SECURITY',
+                'SELECT', 'SENSITIVE', 'SEPARATOR', 'SERIAL', 'SERIALIZABLE', 'SERVER',
+                'SESSION', 'SET', 'SHARE', 'SHOW', 'SHUTDOWN', 'SIGNAL', 'SIGNED',
+                'SIMPLE', 'SKIP', 'SLAVE', 'SLOW', 'SMALLINT', 'SNAPSHOT', 'SOCKET',
+                'SOME', 'SONAME', 'SOUNDS', 'SOURCE', 'SOURCES', 'SOURCE_AUTO_POSITION',
+                'SOURCE_BIND', 'SOURCE_COMPRESSION_ALGORITHMS', 'SOURCE_CONNECT_RETRY',
+                'SOURCE_DELAY', 'SOURCE_HEARTBEAT_PERIOD', 'SOURCE_HOST', 'SOURCE_LOG_FILE',
+                'SOURCE_LOG_POS', 'SOURCE_PASSWORD', 'SOURCE_PORT', 'SOURCE_PUBLIC_KEY_PATH',
+                'SOURCE_RETRY_COUNT', 'SOURCE_SSL', 'SOURCE_SSL_CA', 'SOURCE_SSL_CAPATH',
+                'SOURCE_SSL_CERT', 'SOURCE_SSL_CIPHER', 'SOURCE_SSL_CRL', 'SOURCE_SSL_CRLPATH',
+                'SOURCE_SSL_KEY', 'SOURCE_SSL_VERIFY_SERVER_CERT', 'SOURCE_TLS_CIPHERSUITES',
+                'SOURCE_TLS_VERSION', 'SOURCE_USER', 'SPACE', 'SPATIAL', 'SPECIFIC',
+                'SQL', 'SQLEXCEPTION', 'SQLSTATE', 'SQLWARNING', 'SQL_AFTER_GTIDS',
+                'SQL_AFTER_MTS_GAPS', 'SQL_BEFORE_GTIDS', 'SQL_BIG_RESULT', 'SQL_BUFFER_RESULT',
+                'SQL_CACHE', 'SQL_CALC_FOUND_ROWS', 'SQL_NO_CACHE', 'SQL_SMALL_RESULT',
+                'SQL_THREAD', 'SQL_TSI_DAY', 'SQL_TSI_HOUR', 'SQL_TSI_MINUTE', 'SQL_TSI_MONTH',
+                'SQL_TSI_QUARTER', 'SQL_TSI_SECOND', 'SQL_TSI_WEEK', 'SQL_TSI_YEAR',
+                'SRID', 'SSL', 'STACKED', 'START', 'STARTING', 'STARTS', 'STATS_AUTO_RECALC',
+                'STATS_PERSISTENT', 'STATS_SAMPLE_PAGES', 'STATUS', 'STOP', 'STORAGE',
+                'STORED', 'STRAIGHT_JOIN', 'STREAM', 'STRING', 'SUBCLASS_ORIGIN', 'SUBJECT',
+                'SUBPARTITION', 'SUBPARTITIONS', 'SUPER', 'SUSPEND', 'SWAPS', 'SWITCHES',
+                'SYSTEM', 'TABLE', 'TABLES', 'TABLESPACE', 'TABLE_CHECKSUM', 'TABLE_NAME',
+                'TEMPORARY', 'TEMPTABLE', 'TEMPLATE', 'TERMINATED', 'TEXT', 'THAN',
+                'THEN', 'THREAD_PRIORITY', 'TIES', 'TIME', 'TIMESTAMP', 'TIMESTAMPADD',
+                'TIMESTAMPDIFF', 'TRANSACTION', 'TRANSACTIONAL', 'TRIGGER', 'TRIGGERS',
+                'TRUE', 'TRUNCATE', 'TYPE', 'TYPES', 'UNBOUNDED', 'UNCOMMITTED', 'UNDEFINED',
+                'UNDO', 'UNDOFILE', 'UNDO_BUFFER_SIZE', 'UNICODE', 'UNINSTALL', 'UNION',
+                'UNIQUE', 'UNKNOWN', 'UNLOCK', 'UNSIGNED', 'UNTIL', 'UPDATE', 'UPGRADE',
+                'URL', 'USAGE', 'USE', 'USER', 'USER_RESOURCES', 'USE_FRM', 'USING',
+                'UTC_DATE', 'UTC_TIME', 'UTC_TIMESTAMP', 'VALIDATION', 'VALUE', 'VALUES',
+                'VARBINARY', 'VARCHAR', 'VARCHARACTER', 'VARIABLES', 'VARYING', 'VCPU',
+                'VIEW', 'VIRTUAL', 'VISIBLE', 'WAIT', 'WARNINGS', 'WEEK', 'WEIGHT_STRING',
+                'WHEN', 'WHERE', 'WHILE', 'WINDOW', 'WITH', 'WITHOUT', 'WORK', 'WRAPPER',
+                'WRITE', 'X509', 'XA', 'XID', 'XML', 'XOR', 'YEAR', 'YEAR_MONTH', 'ZEROFILL'
+            ],
+
+            sqlServer: [
+                "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUTHORIZATION", "BACKUP", "BEGIN",
+                "BETWEEN", "BREAK", "BROWSE", "BULK", "BY", "CASCADE", "CASE", "CHECK", "CHECKPOINT", "CLOSE",
+                "CLUSTERED", "COALESCE", "COLLATE", "COLUMN", "COMMIT", "COMPUTE", "CONSTRAINT", "CONTAINS",
+                "CONTAINSTABLE", "CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME",
+                "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "DATABASE", "DBCC", "DEALLOCATE", "DECLARE", "DEFAULT",
+                "DELETE", "DENY", "DESC", "DISK", "DISTINCT", "DISTRIBUTED", "DOUBLE", "DROP", "DUMP", "ELSE", "END",
+                "ERRLVL", "ESCAPE", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXIT", "EXTERNAL", "FETCH", "FILE",
+                "FILLFACTOR", "FOR", "FOREIGN", "FREETEXT", "FREETEXTTABLE", "FROM", "FULL", "FUNCTION", "GOTO", "GRANT",
+                "GROUP", "HAVING", "HOLDLOCK", "IDENTITY", "IDENTITY_INSERT", "IDENTITYCOL", "IF", "IN", "INDEX", "INNER",
+                "INSERT", "INTERSECT", "INTO", "IS", "JOIN", "KEY", "KILL", "LEFT", "LIKE", "LINENO", "LOAD", "MERGE",
+                "NATIONAL", "NOCHECK", "NONCLUSTERED", "NOT", "NULL", "NULLIF", "OF", "OFF", "OFFSETS", "ON", "OPEN",
+                "OPENDATASOURCE", "OPENQUERY", "OPENROWSET", "OPENXML", "OPTION", "OR", "ORDER", "OUTER", "OVER",
+                "PERCENT", "PIVOT", "PLAN", "PRECISION", "PRIMARY", "PRINT", "PROC", "PROCEDURE", "PUBLIC", "RAISERROR",
+                "READ", "READTEXT", "RECONFIGURE", "REFERENCES", "REPLICATION", "RESTORE", "RESTRICT", "RETURN", "REVERT",
+                "REVOKE", "RIGHT", "ROLLBACK", "ROWCOUNT", "ROWGUIDCOL", "RULE", "SAVE", "SCHEMA", "SECURITYAUDIT", "SELECT",
+                "SEMANTICKEYPHRASETABLE", "SEMANTICSIMILARITYDETAILSTABLE", "SEMANTICSIMILARITYTABLE", "SESSION_USER", "SET",
+                "SETUSER", "SHUTDOWN", "SOME", "STATISTICS", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "TEXTSIZE", "THEN", "TO",
+                "TOP", "TRAN", "TRANSACTION", "TRIGGER", "TRUNCATE", "TRY_CONVERT", "TSEQUAL", "UNION", "UNIQUE", "UNPIVOT",
+                "UPDATE", "UPDATETEXT", "USE", "USER", "VALUES", "VARYING", "VIEW", "WAITFOR", "WHEN", "WHERE", "WHILE",
+                "WITH", "WITHIN GROUP", "WRITETEXT"
+            ],
+
+            sqlite: [
+                "ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH",
+                "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE",
+                "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME",
+                "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC", "DETACH",
+                "DISTINCT", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL",
+                "FILTER", "FOLLOWING", "FOR", "FOREIGN", "FROM", "FULL", "GLOB", "GROUP", "HAVING", "IF", "IGNORE",
+                "IMMEDIATE", "IN", "INDEX", "INDEXED", "INITIALLY", "INNER", "INSERT", "INSTEAD", "INTERSECT", "INTO", "IS",
+                "ISNULL", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "MATCH", "NATURAL", "NO", "NOT", "NOTHING", "NOTNULL",
+                "NULL", "OF", "OFFSET", "ON", "OR", "ORDER", "OUTER", "OVER", "PARTITION", "PLAN", "PRAGMA", "PRIMARY",
+                "QUERY", "RAISE", "RANGE", "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME", "REPLACE",
+                "RESTRICT", "RETURNING", "RIGHT", "ROLLBACK", "ROW", "ROWS", "SAVEPOINT", "SELECT", "SET", "TABLE", "TEMP",
+                "TEMPORARY", "THEN", "TO", "TRANSACTION", "TRIGGER", "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES",
+                "VIEW", "VIRTUAL", "WHEN", "WHERE", "WINDOW", "WITH", "WITHOUT"
+            ],
+
+            oracle: [
+                "ACCESS", "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUDIT", "BETWEEN", "BY", "CHAR", "CHECK",
+                "CLUSTER", "COLUMN", "COMMENT", "COMPRESS", "CONNECT", "CREATE", "CURRENT", "DATE", "DECIMAL", "DEFAULT",
+                "DELETE", "DESC", "DISTINCT", "DROP", "ELSE", "EXCLUSIVE", "EXISTS", "FILE", "FLOAT", "FOR", "FROM", "GRANT",
+                "GROUP", "HAVING", "IDENTIFIED", "IMMEDIATE", "IN", "INCREMENT", "INDEX", "INITIAL", "INSERT", "INTEGER",
+                "INTERSECT", "INTO", "IS", "LEVEL", "LIKE", "LOCK", "LONG", "MAXEXTENTS", "MINUS", "MLSLABEL", "MODE",
+                "MODIFY", "NESTED", "NOAUDIT", "NOCOMPRESS", "NOT", "NOWAIT", "NULL", "NUMBER", "OF", "OFFLINE", "ON",
+                "ONLINE", "OPTION", "OR", "ORDER", "PCTFREE", "PRIOR", "PRIVILEGES", "PUBLIC", "RAW", "RENAME", "RESOURCE",
+                "REVOKE", "ROW", "ROWID", "ROWNUM", "ROWS", "SELECT", "SESSION", "SET", "SHARE", "SIZE", "SMALLINT", "START",
+                "SUCCESSFUL", "SYNONYM", "SYSDATE", "TABLE", "THEN", "TO", "TRIGGER", "UID", "UNION", "UNIQUE", "UPDATE",
+                "USER", "VALIDATE", "VALUES", "VARCHAR", "VARCHAR2", "VIEW", "WHENEVER", "WHERE", "WITH"
+            ],
+
+            amazonRedshift: [
+                "AES128", "AES256", "ALL", "ALLOWOVERWRITE", "ANALYSE", "ANALYZE", "AND", "ANY", "ARRAY", "AS", "ASC",
+                "AUTHORIZATION", "BACKUP", "BETWEEN", "BINARY", "BLANKSASNULL", "BOTH", "BY", "CASE", "CAST", "CHECK",
+                "COLLATE", "COLUMN", "CONSTRAINT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+                "CURRENT_USER", "DATABASE", "DATEADD", "DATEDIFF", "DAY", "DEFAULT", "DELETE", "DESC", "DISTINCT", "DROP",
+                "ELSE", "END", "EXCEPT", "EXISTS", "EXTRACT", "FALSE", "FOR", "FOREIGN", "FROM", "FULL", "GROUP", "HAVING",
+                "ILIKE", "IN", "INITIALLY", "INNER", "INSERT", "INTERSECT", "INTERVAL", "INTO", "IS", "ISNULL", "JOIN", "LCASE",
+                "LEFT", "LIKE", "LIMIT", "LOCALTIME", "LOCALTIMESTAMP", "NATURAL", "NOT", "NULL", "NULLIF", "OFFSET", "ON",
+                "ONLY", "OR", "ORDER", "OUTER", "OVERLAPS", "POSITION", "PRIMARY", "REFERENCES", "RIGHT", "SIMILAR", "SOME",
+                "SYSDATE", "TABLE", "THEN", "TO", "TOP", "TRAILING", "TRIM", "UNION", "UNIQUE", "USING", "VERBOSE", "WHEN",
+                "WHERE", "WITH"
+            ],
+
+            googleBigQuery: [
+                "ALL", "AND", "ANY", "ARRAY", "AS", "ASC", "ASSERT_ROWS_MODIFIED", "AT", "BETWEEN", "BY", "CASE", "CAST",
+                "COLLATE", "CONTAINS", "CREATE", "CROSS", "CUBE", "CURRENT", "DEFAULT", "DEFINE", "DESC", "DISTINCT", "ELSE",
+                "END", "ENUM", "ESCAPE", "EXCEPT", "EXCLUDE", "EXISTS", "EXTRACT", "FALSE", "FOR", "FROM", "FULL", "GROUP",
+                "GROUPING", "GROUPS", "HAVING", "IF", "IGNORE", "IN", "INNER", "INTERSECT", "INTERVAL", "INTO", "IS", "JOIN",
+                "LATERAL", "LEFT", "LIKE", "LIMIT", "LOOKUP", "MERGE", "NATURAL", "NEW", "NO", "NOT", "NULL", "NULLS", "OF",
+                "ON", "OR", "ORDER", "OUTER", "OVER", "PARTITION", "PRECEDING", "PROTO", "RANGE", "RECURSIVE", "RESPECT",
+                "RIGHT", "ROLLUP", "ROWS", "SAFE", "SELECT", "SET", "SOME", "STRUCT", "TABLESAMPLE", "THEN", "TO", "UNBOUNDED",
+                "UNION", "UNNEST", "USING", "WHEN", "WHERE", "WINDOW", "WITH", "WITHIN"
+            ],
+
+            ibmDb2: [
+                "ADD", "AFTER", "ALIAS", "ALL", "ALLOCATE", "ALTER", "AND", "ANY", "AS", "ASC", "ASSOCIATE", "ASUTIME",
+                "AUDIT", "AUTHORIZATION", "AUX", "AUXILIARY", "BEFORE", "BEGIN", "BETWEEN", "BINARY", "BUFFERPOOL", "BY",
+                "CACHE", "CALL", "CAPTURE", "CARDINALITY", "CASE", "CAST", "CCSID", "CHAR", "CHARACTER", "CHECK", "CLOSE",
+                "CLUSTER", "COLLECTION", "COLLID", "COLUMN", "COMMENT", "COMMIT", "CONCAT", "CONDITION", "CONNECT", "CONNECTION",
+                "CONSTRAINT", "CONTINUE", "COUNT", "COUNT_BIG", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_LC_CTYPE",
+                "CURRENT_PATH", "CURRENT_SCHEMA", "CURRENT_SERVER", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_TIMEZONE",
+                "CURRENT_USER", "CURSOR", "DATA", "DATABASE", "DAY", "DB2GENERAL", "DB2GENRL", "DB2SQL", "DBINFO", "DBSPACE",
+                "DEALLOCATE", "DECLARE", "DEFAULT", "DELETE", "DESC", "DESCRIBE", "DESCRIPTOR", "DIAGNOSTICS", "DISCONNECT",
+                "DISTINCT", "DO", "DOCUMENT", "DOUBLE", "DROP", "DYNAMIC", "EACH", "ELSE", "ELSEIF", "END", "ESCAPE", "EXCEPT",
+                "EXCLUSIVE", "EXECUTE", "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH", "FIELDPROC", "FOR", "FOREIGN", "FREE",
+                "FROM", "FULL", "FUNCTION", "GET", "GLOBAL", "GO", "GOTO", "GRANT", "GROUP", "HANDLER", "HAVING", "HOLD",
+                "HOUR", "IF", "IMMEDIATE", "IN", "INCLUDE", "INCREMENT", "INDEX", "INDICATOR", "INITIALLY", "INNER", "INOUT",
+                "INSENSITIVE", "INSERT", "INTEGER", "INTERSECT", "INTERVAL", "INTO", "IS", "ISOLATION", "ITERATE", "JOIN", "KEY",
+                "LABEL", "LANGUAGE", "LEAVE", "LEFT", "LIKE", "LOCAL", "LOOP", "MODIFIES", "NO", "NOT", "NULL", "OF", "ON", "OPEN",
+                "OPTIMIZATION", "OPTION", "OR", "ORDER", "OUT", "OUTER", "OVERRIDE", "PACKAGE", "PART", "PARTITION", "PATH",
+                "PIECESIZE", "POSITION", "PRECISION", "PREPARE", "PRIMARY", "PRIVILEGES", "PROCEDURE", "PROGRAM", "PUBLIC",
+                "READ", "READS", "REAL", "RELEASE", "RENAME", "REPEAT", "RESIGNAL", "RETURN", "RETURNS", "REVOKE", "RIGHT",
+                "ROLLBACK", "SAVEPOINT", "SCHEMA", "SECOND", "SELECT", "SENSITIVE", "SESSION", "SIGNAL", "SIMPLE", "SOME",
+                "SPECIFIC", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "START", "STATIC", "SUBSTRING", "TABLE", "THEN",
+                "TO", "TRIGGER", "UNDO", "UNION", "UNIQUE", "UNTIL", "UPDATE", "USING", "VALUES", "VARCHAR", "VIEW", "WHEN",
+                "WHERE", "WHILE", "WITH", "WITHOUT", "XML", "YEAR", "ZONE"
+            ],
+
+            ibmDb2ForI: [
+                "ACTIVATE", "ADD", "AFTER", "ALIAS", "ALL", "ALLOCATE", "ALLOW", "ALTER", "AND", "ANY", "AS", "ASC", "ASSOCIATE",
+                "ASYMMETRIC", "AT", "ATTRIBUTES", "AUDIT", "AUTHORIZATION", "AUX", "AUXILIARY", "BEFORE", "BEGIN", "BETWEEN",
+                "BINARY", "BLOB", "BOOLEAN", "BUFFERPOOL", "BY", "CALL", "CALLED", "CARDINALITY", "CASCADED", "CASE", "CAST",
+                "CCSID", "CHAR", "CHARACTER", "CHECK", "CLOB", "CLOSE", "CLUSTER", "COLLATE", "COLLECTION", "COLLID", "COLUMN",
+                "COMMENT", "COMMIT", "CONCAT", "CONDITION", "CONNECT", "CONNECTION", "CONSTRAINT", "CONTINUE", "CORRESPONDING",
+                "COUNT", "COUNT_BIG", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_LC_CTYPE", "CURRENT_PATH",
+                "CURRENT_ROLE", "CURRENT_SCHEMA", "CURRENT_SERVER", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_TIMEZONE",
+                "CURRENT_USER", "CURSOR", "CYCLE", "DATA", "DATABASE", "DATE", "DAY", "DB2GENERAL", "DB2GENRL", "DB2SQL",
+                "DBINFO", "DBSPACE", "DEALLOCATE", "DECLARE", "DEFAULT", "DELETE", "DESC", "DESCRIBE", "DESCRIPTOR", "DETERMINISTIC",
+                "DIAGNOSTICS", "DISALLOW", "DISCONNECT", "DISTINCT", "DO", "DOUBLE", "DROP", "DYNAMIC", "EACH", "ELSE", "ELSEIF",
+                "ENABLE", "ENCODING", "END", "ESCAPE", "EXCEPT", "EXCEPTION", "EXCLUSIVE", "EXECUTE", "EXISTS", "EXIT", "EXPLAIN",
+                "EXTEND", "EXTERNAL", "EXTRACT", "FALSE", "FETCH", "FILTER", "FOR", "FOREIGN", "FREE", "FROM", "FULL", "FUNCTION",
+                "GET", "GLOBAL", "GRANT", "GROUP", "HAVING", "HOLD", "HOUR", "IDENTITY", "IF", "IMMEDIATE", "IN", "INCLUDE",
+                "INCREMENT", "INDEX", "INDICATOR", "INITIALLY", "INNER", "INOUT", "INSENSITIVE", "INSERT", "INSTEAD", "INT",
+                "INTEGER", "INTERSECT", "INTERVAL", "INTO", "IS", "ISOLATION", "ITERATE", "JOIN", "KEY", "LABEL", "LANGUAGE",
+                "LATERAL", "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LOCAL", "LOOP", "MODIFIES", "NCHAR", "NO", "NOT", "NULL",
+                "NUMERIC", "OBJECT", "OF", "OFFSET", "ON", "ONLY", "OPEN", "OPTION", "OR", "ORDER", "OUT", "OUTER", "OVER", "PACKAGE",
+                "PARTITION", "PATH", "PERCENT", "PLAN", "POSITION", "PRECISION", "PREPARE", "PRIMARY", "PRIVILEGES", "PROCEDURE",
+                "PROGRAM", "PUBLIC", "READ", "READS", "REAL", "RECURSIVE", "REF", "REFERENCES", "REFERENCING", "RELEASE",
+                "RENAME", "REPEAT", "RESET", "RESIGNAL", "RESTART", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLLBACK",
+                "ROUTINE", "ROW", "ROWS", "SAVEPOINT", "SCHEMA", "SECOND", "SELECT", "SENSITIVE", "SESSION", "SIGNAL", "SIMILAR",
+                "SIMPLE", "SOME", "SPECIFIC", "SPECIFICTYPE", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "START", "STATIC",
+                "SUBSTRING", "SYMMETRIC", "TABLE", "THEN", "TIME", "TIMESTAMP", "TO", "TRAILING", "TRANSLATE", "TRANSLATION",
+                "TRIGGER", "TRUE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UNTIL", "UPDATE", "USAGE", "USING", "VALUES", "VARCHAR",
+                "VARIABLE", "VARIANT", "VARYING", "VIEW", "VOLATILE", "WHEN", "WHERE", "WHILE", "WITH", "WITHOUT", "XML", "XMLAGG",
+                "YEAR", "ZONE"
+            ],
+
+            apacheHive: [
+                "ADD", "ADMIN", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "ARCHIVE", "ARRAY", "AS", "ASC", "AT",
+                "AUTHORIZATION", "BEFORE", "BETWEEN", "BIGINT", "BINARY", "BOOLEAN", "BOTH", "BUCKET", "BY", "CACHE", "CASCADE",
+                "CASE", "CAST", "CHANGE", "CHAR", "CLASS", "CLUSTER", "CLUSTERED", "CLUSTERSTATUS", "COLLECTION", "COLUMN",
+                "COLUMNS", "COMMENT", "COMMIT", "COMPACT", "COMPACTIONS", "COMPUTE", "CONCATENATE", "CONF", "CONSTRAINT",
+                "CONTINUE", "CREATE", "CROSS", "CUBE", "CURRENT", "CURRENT_DATE", "CURRENT_TIMESTAMP", "CURSOR", "DATA",
+                "DATABASE", "DATABASES", "DATE", "DATETIME", "DAY", "DBPROPERTIES", "DDL", "DEFERRED", "DEFINED", "DELETE",
+                "DELIMITED", "DEPENDENCY", "DESC", "DESCRIBE", "DIRECTORIES", "DIRECTORY", "DISABLE", "DISTINCT", "DISTRIBUTE",
+                "DOUBLE", "DROP", "ELEM_TYPE", "ELSE", "ENABLE", "END", "ESCAPED", "EXCHANGE", "EXCLUSIVE", "EXISTS", "EXPLAIN",
+                "EXPORT", "EXTERNAL", "EXTRACT", "FALSE", "FETCH", "FIELDS", "FILEFORMAT", "FIRST", "FLOAT", "FOLLOWING", "FOR",
+                "FORMAT", "FORMATTED", "FROM", "FULL", "FUNCTION", "FUNCTIONS", "GRANT", "GROUP", "GROUPING", "HAVING", "HOLD_DDLTIME",
+                "HOUR", "IDXPROPERTIES", "IF", "IGNORE", "IMPORT", "IN", "INDEX", "INDEXES", "INNER", "INPATH", "INPUTDRIVER",
+                "INPUTFORMAT", "INSERT", "INT", "INTERSECT", "INTERVAL", "INTO", "IS", "ITEMS", "JAR", "JOIN", "KEY", "KEYS",
+                "LATERAL", "LEFT", "LESS", "LIKE", "LIMIT", "LINES", "LOAD", "LOCAL", "LOCATION", "LOCK", "LOCKS", "LOGICAL",
+                "LONG", "MAP", "MAPJOIN", "MATERIALIZED", "MINUS", "MINUTE", "MONTH", "MSCK", "NO_DROP", "NORELY", "NOSCAN",
+                "NOT", "NULL", "OF", "OFFLINE", "ON", "OPTION", "OR", "ORDER", "OUT", "OUTER", "OUTPUTDRIVER", "OUTPUTFORMAT",
+                "OVER", "OVERWRITE", "OWNER", "PARTITION", "PARTITIONED", "PARTITIONS", "PERCENT", "PLUS", "PRECEDING", "PRESERVE",
+                "PRIMARY", "PRINCIPALS", "PROCEDURE", "PURGE", "RANGE", "READ", "READONLY", "READS", "REBUILD", "RECORDREADER",
+                "RECORDWRITER", "REDUCE", "REGEXP", "RELOAD", "RELY", "RENAME", "REPAIR", "REPLACE", "RESTRICT", "REVOKE", "RIGHT",
+                "RLIKE", "ROLE", "ROLES", "ROLLUP", "ROW", "ROWS", "SCHEMA", "SCHEMAS", "SECOND", "SELECT", "SEMI", "SERDE",
+                "SERDEPROPERTIES", "SERVER", "SET", "SETS", "SHARED", "SHOW", "SKEWED", "SMALLINT", "SNAPSHOT", "SORT", "SORTED",
+                "SSL", "STATISTICS", "STORED", "STREAMTABLE", "STRING", "STRUCT", "TABLE", "TABLES", "TABLESAMPLE", "TBLPROPERTIES",
+                "TEMPORARY", "TERMINATED", "THEN", "TIME", "TIMESTAMP", "TO", "TOUCH", "TRANSACTION", "TRANSACTIONS", "TRANSFORM",
+                "TRIGGER", "TRUE", "TRUNCATE", "UNARCHIVE", "UNBOUNDED", "UNDO", "UNION", "UNIQUE", "UNLOCK", "UNSET", "UNSIGNED",
+                "UPDATE", "URI", "USE", "USER", "USING", "UTC", "UTCTIMESTAMP", "VALUE_TYPE", "VALUES", "VIEW", "VIEWS", "WHEN",
+                "WHERE", "WHILE", "WINDOW", "WITH", "YEAR"
+            ],
+
+            n1ql: [
+                "ALL", "ALTER", "ANALYZE", "AND", "ANY", "ARRAY", "AS", "ASC", "BEGIN", "BETWEEN", "BINARY", "BOOLEAN",
+                "BREAK", "BUCKET", "BUILD", "BY", "CALL", "CASE", "CAST", "CLUSTER", "COLLECTION", "COMMIT", "CONTINUE",
+                "CORRELATE", "COVER", "CREATE", "DATABASE", "DATE", "DATETIME", "DECIMAL", "DECLARE", "DELETE", "DESC",
+                "DESCRIBE", "DISTINCT", "DO", "DROP", "EACH", "ELEMENT", "ELSE", "END", "EXCEPT", "EXISTS", "EXPLAIN",
+                "FALSE", "FETCH", "FIRST", "FLATTEN", "FOR", "FORCE", "FROM", "FUNCTION", "GRANT", "GROUP", "GSI",
+                "HASH", "HAVING", "IF", "IGNORE", "ILIKE", "IN", "INCLUDE", "INDEX", "INLINE", "INNER", "INSERT", "INTERSECT",
+                "INTERVAL", "INTO", "IS", "JOIN", "KEY", "KEYS", "KEYSPACE", "LAST", "LEFT", "LET", "LETTING", "LIKE",
+                "LIMIT", "LSM", "MAP", "MAPPING", "MATERIALIZED", "MERGE", "MISSING", "NAMESPACE", "NEST", "NOT", "NULL",
+                "NUMBER", "OBJECT", "OFFSET", "ON", "OPTION", "OR", "ORDER", "OUTER", "OVER", "PARSE", "PARTITION", "PASSWORD",
+                "PATH", "POOL", "PREPARE", "PRIMARY", "PRIVATE", "PRIVILEGE", "PROCEDURE", "PUBLIC", "RAW", "REALM", "REDUCE",
+                "RENAME", "RETURN", "RETURNING", "REVOKE", "RIGHT", "ROLE", "ROLLBACK", "SATISFIES", "SCHEMA", "SELECT",
+                "SELF", "SET", "SHOW", "SOME", "START", "STAT", "STRING", "SYSTEM", "TO", "TRANSACTION", "TRUE", "TRUNCATE",
+                "UNION", "UNIQUE", "UNNEST", "UNSET", "UPDATE", "UPSERT", "USE", "USER", "USING", "VALIDATE", "VALUE", "VALUES",
+                "VIA", "VIEW", "WHEN", "WHERE", "WHILE", "WITH", "WORK", "XOR"
+            ],
+
+            singlestoreDb: [
+                "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUTO_INCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BIGINT",
+                "BINARY", "BLOB", "BOOLEAN", "BY", "CALL", "CASE", "CASCADE", "CHAR", "CHARACTER", "CHECK", "COLUMN",
+                "COMMIT", "CONSTRAINT", "CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+                "CURSOR", "DATABASE", "DECIMAL", "DECLARE", "DEFAULT", "DELETE", "DESC", "DESCRIBE", "DISTINCT", "DOUBLE",
+                "DROP", "DUPLICATE", "EACH", "ELSE", "ELSEIF", "END", "ESCAPE", "EXISTS", "EXIT", "FALSE", "FETCH", "FLOAT",
+                "FOR", "FOREIGN", "FROM", "FULL", "GRANT", "GROUP", "HAVING", "IF", "IN", "INDEX", "INNER", "INSERT", "INT",
+                "INTEGER", "INTERSECT", "INTO", "IS", "JOIN", "KEY", "LEAVE", "LEFT", "LIKE", "LIMIT", "LOCK", "LONG", "LOOP",
+                "MATCH", "MERGE", "MINUS", "MODIFIES", "NATURAL", "NO_WRITE_TO_BINLOG", "NOT", "NULL", "NUMBER", "NUMERIC",
+                "ON", "OPTIMIZE", "OPTION", "OR", "ORDER", "OUT", "OUTER", "PARTITION", "PERCENT", "PREPARE", "PRIMARY", "PROCEDURE",
+                "RECURSIVE", "REFERENCES", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RETURN", "RIGHT", "ROLLBACK", "ROW",
+                "ROWS", "SAVEPOINT", "SELECT", "SET", "SHOW", "START", "SYSTEM", "TABLE", "THEN", "TO", "TRANSACTION", "TRUE",
+                "TRUNCATE", "UNION", "UNIQUE", "UPDATE", "USE", "VALUES", "VARCHAR", "VARYING", "WHEN", "WHERE", "WHILE",
+                "WITH", "XOR"
+            ],
+
+            snowflake: [
+                "ALL", "ALTER", "AND", "ANY", "AS", "BETWEEN", "BY", "CASE", "CAST", "CHECK", "COLUMN", "CONNECT", "COPY",
+                "CREATE", "CURRENT", "CURRENT_DATE", "CURRENT_TIMESTAMP", "DELETE", "DISTINCT", "DROP", "ELSE", "EXISTS", "FALSE",
+                "FOR", "FROM", "FULL", "GRANT", "GROUP", "HAVING", "ILIKE", "IN", "INSERT", "INTERSECT", "INTO", "IS", "JOIN",
+                "LATERAL", "LIKE", "LIMIT", "MINUS", "NATURAL", "NOT", "NULL", "ON", "OR", "ORDER", "QUALIFY", "REVOKE", "RIGHT",
+                "ROW", "ROWS", "SAMPLE", "SELECT", "TABLE", "THEN", "TRUE", "UNION", "UPDATE", "USING", "VALUES", "WHEN",
+                "WHERE", "WITH"
+            ],
+
+            apacheSpark: [
+                "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "ANTI", "ANY", "ARCHIVE", "ARRAY", "AS", "ASC", "AT", "AUTHORIZATION",
+                "BETWEEN", "BIGINT", "BINARY", "BOOLEAN", "BOTH", "BUCKET", "BY", "CACHE", "CASCADE", "CASE", "CAST", "CHANGE",
+                "CHAR", "CLUSTER", "CLUSTERED", "CODEGEN", "COLLECTION", "COLUMN", "COLUMNS", "COMMENT", "COMMIT", "COMPACT",
+                "COMPACTIONS", "COMPUTE", "CONCATENATE", "CONSTRAINT", "COST", "CROSS", "CUBE", "CURRENT", "CURRENT_DATE",
+                "CURRENT_TIMESTAMP", "DATABASE", "DATABASES", "DATE", "DAY", "DDL", "DEFERRED", "DEFINED", "DELETE", "DELIMITED",
+                "DESC", "DESCRIBE", "DIRECTORIES", "DIRECTORY", "DISTINCT", "DISTRIBUTE", "DIV", "DOUBLE", "DROP", "ELSE",
+                "END", "ESCAPE", "EXCEPT", "EXCHANGE", "EXISTS", "EXPLAIN", "EXPORT", "EXTENDED", "EXTERNAL", "EXTRACT", "FALSE",
+                "FETCH", "FIELDS", "FILEFORMAT", "FILTER", "FIRST", "FLOAT", "FOLLOWING", "FOR", "FOREIGN", "FORMAT", "FORMATTED",
+                "FROM", "FULL", "FUNCTION", "FUNCTIONS", "GLOBAL", "GRANT", "GROUP", "GROUPING", "HAVING", "IF", "IGNORE",
+                "IMPORT", "IN", "INDEX", "INDEXES", "INNER", "INPATH", "INSERT", "INT", "INTERSECT", "INTERVAL", "INTO", "IS",
+                "ITEMS", "JOIN", "KEYS", "LATERAL", "LEFT", "LESS", "LIKE", "LIMIT", "LINES", "LIST", "LOAD", "LOCAL", "LOCATION",
+                "LOCK", "MACRO", "MAP", "MATCHED", "MERGE", "MINUTE", "MONTH", "MSCK", "NATURAL", "NO", "NOT", "NULL", "OF",
+                "ON", "OPTION", "OPTIONS", "OR", "ORDER", "OUT", "OUTER", "OUTPUTFORMAT", "OVER", "OVERLAPS", "OVERLAY",
+                "OVERWRITE", "PARTITION", "PARTITIONED", "PARTITIONS", "PERCENT", "PIVOT", "PLACING", "PRIMARY", "PRINCIPALS",
+                "PROPERTIES", "PURGE", "QUARTER", "QUERY", "RANGE", "REBUILD", "RECOVER", "REDUCE", "REFERENCES", "REFRESH",
+                "RENAME", "REPAIR", "REPLACE", "RESTRICT", "REVOKE", "RIGHT", "RLIKE", "ROLE", "ROLES", "ROLLBACK", "ROLLUP",
+                "ROW", "ROWS", "SCHEMA", "SCHEMAS", "SECOND", "SELECT", "SEMI", "SEPARATED", "SERDE", "SERDEPROPERTIES", "SET",
+                "SHOW", "SKEWED", "SORT", "SORTED", "SOURCE", "SPECIFY", "STAGE", "STORED", "STRATEGY", "STRUCT", "TABLE",
+                "TABLES", "TABLESAMPLE", "TBLPROPERTIES", "TEMPORARY", "TERMINATED", "THEN", "TIME", "TIMESTAMP", "TO", "TOUCH",
+                "TRAILING", "TRANSACTION", "TRANSFORM", "TRUNCATE", "UNARCHIVE", "UNBOUNDED", "UNION", "UNIQUE", "UNLOCK",
+                "UNSET", "USE", "USING", "VIEW", "VIEWS", "WHEN", "WHERE", "WINDOW", "WITH", "YEAR"
+            ],
+
+            trino: [
+                "ABS", "ACOS", "ALL", "AND", "APPROX_DISTINCT", "APPROX_PERCENTILE", "ARRAY", "ARRAY_DISTINCT", "ARRAY_JOIN",
+                "ARRAY_MAX", "ARRAY_MIN", "ARRAY_REMOVE", "ARRAY_SORT", "AS", "ASC", "ASIN", "ATAN", "AVG", "BETWEEN", "CASE",
+                "CAST", "CEIL", "CEILING", "COALESCE", "COS", "COT", "COUNT", "COVAR_POP", "COVAR_SAMP", "CREATE", "CROSS",
+                "DATE", "DATE_ADD", "DATE_DIFF", "DATE_TRUNC", "DAY", "DENSE_RANK", "DESC", "DISTINCT", "DOUBLE", "DROP",
+                "ELSE", "END", "EXP", "EXISTS", "EXPLAIN", "FLOOR", "FORMAT", "FROM", "FULL", "GROUP", "HAVING", "IF", "IN",
+                "INNER", "INSERT", "INTERSECT", "IS", "JOIN", "LAG", "LAST_VALUE", "LEAD", "LEFT", "LIKE", "LIMIT", "LN",
+                "LOG", "LOG10", "LOWER", "LUNAR_MONTHS_BETWEEN", "MAX", "MIN", "MOD", "NOT", "NULL", "OFFSET", "ON", "OR",
+                "ORDER", "OUTER", "OVER", "PERCENTILE_CONT", "PERCENTILE_DISC", "PI", "POSITION", "POWER", "RADIANS", "RAND",
+                "RANDOM", "RANK", "REGEXP", "REPLACE", "ROUND", "ROW", "ROW_NUMBER", "SELECT", "SIGN", "SIN", "SQRT", "STDDEV",
+                "STDDEV_POP", "STDDEV_SAMP", "SUM", "TABLE", "TAN", "THEN", "TO", "TO_DATE", "TO_TIMESTAMP", "TRIM", "TRUNCATE",
+                "UNION", "UNIQUE", "UPPER", "VAR_POP", "VAR_SAMP", "VARIANCE", "WHEN", "WHERE", "WITH"
+            ],
+
+            amazonAthena: [
+                "ALL", "ALTER", "AND", "ANY", "ARRAY", "AS", "ASC", "AT", "BETWEEN", "BY", "CASE", "CAST", "COLUMN",
+                "CONCAT", "CONTAINS", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_PATH", "CURRENT_ROLE",
+                "CURRENT_SCHEMA", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER", "DELETE", "DESCRIBE", "DISTINCT",
+                "DROP", "ELSE", "END", "EXCEPT", "EXISTS", "EXPLAIN", "EXTRACT", "FALSE", "FOR", "FROM", "FULL", "GRANT",
+                "GROUP", "GROUPING", "HAVING", "IN", "INNER", "INSERT", "INTERSECT", "INTERVAL", "INTO", "IS", "JOIN",
+                "LATERAL", "LEFT", "LIKE", "LIMIT", "MAP", "NATURAL", "NOT", "NULL", "ON", "OR", "ORDER", "OUTER", "OVER",
+                "PARTITION", "RECURSIVE", "REGEXP", "RENAME", "RIGHT", "ROLLUP", "SELECT", "TABLE", "THEN", "TO", "TRUE",
+                "UNION", "UNIQUE", "UNNEST", "UPDATE", "USING", "VALUES", "WHEN", "WHERE", "WITH"
+            ]
+        };
+
+
+        // Built-in functions for each DB, including NULL handling
+        static builtInFunctionsByDB = {
+
+            postgresql: [
+                "ABS", "ACOS", "ASCII", "ASIN", "ATAN", "CEIL", "CEILING", "CHAR_LENGTH", "CHR", "CONCAT", "COS",
+                "COT", "DEGREES", "EXP", "FLOOR", "INITCAP", "LENGTH", "LN", "LOG", "LOWER", "LPAD", "LTRIM",
+                "MD5", "PI", "POWER", "RADIANS", "RANDOM", "REPEAT", "REPLACE", "REVERSE", "ROUND", "RPAD",
+                "RTRIM", "SIGN", "SIN", "SQRT", "SUBSTRING", "TAN", "TO_HEX", "TO_NUMBER", "TRIM", "UPPER",
+                "AVG", "COUNT", "MAX", "MIN", "SUM", "ARRAY_AGG", "STRING_AGG", "JSON_AGG", "JSONB_AGG",
+                "XMLAGG", "BIT_AND", "BIT_OR", "BOOL_AND", "BOOL_OR"
+            ],
+
+            oracle: [
+                "ABS", "ACOS", "ASCII", "ASIN", "ATAN", "ATAN2", "AVG", "BIN_TO_NUM", "CEIL", "CHARTOROWID", "CHR",
+                "COALESCE", "COMPOSE", "CONCAT", "CONVERT", "COS", "COSH", "COUNT", "COVAR_POP", "COVAR_SAMP",
+                "CUME_DIST", "CURRENT_DATE", "CURRENT_TIMESTAMP", "DBTIMEZONE", "DECODE", "DEGREES", "DENSE_RANK",
+                "DUMP", "EXP", "EXTRACT", "FIRST_VALUE", "FLOOR", "FROM_TZ", "GREATEST", "GROUP_ID", "HEXTORAW",
+                "INITCAP", "INSTR", "LAG", "LAST_DAY", "LAST_VALUE", "LEAD", "LEAST", "LENGTH", "LN", "LOG",
+                "LOWER", "LPAD", "LTRIM", "MAX", "MEDIAN", "MIN", "MOD", "MONTHS_BETWEEN", "NANVL", "NEW_TIME",
+                "NEXT_DAY", "NTILE", "NULLIF", "NVL", "NVL2", "POWER", "RADIANS", "RANK", "RAWTOHEX", "REMAINDER",
+                "REPLACE", "ROUND", "ROWNUM", "ROW_NUMBER", "RPAD", "RTRIM", "SIGN", "SIN", "SINH", "SQRT",
+                "STDDEV", "STDDEV_POP", "STDDEV_SAMP", "SUBSTR", "SUM", "SYSDATE", "SYSTIMESTAMP", "TAN",
+                "TANH", "TO_CHAR", "TO_DATE", "TO_NUMBER", "TRANSLATE", "TRUNC", "TZ_OFFSET", "UID", "UPPER",
+                "USER", "VARIANCE", "VAR_POP", "VAR_SAMP"
+            ],
+
+            mysql: [
+                "ABS", "ACOS", "ADDDATE", "ADDTIME", "AES_DECRYPT", "AES_ENCRYPT", "ASCII", "ASIN", "ATAN", "ATAN2",
+                "AVG", "BENCHMARK", "BIN", "BIT_AND", "BIT_COUNT", "BIT_LENGTH", "BIT_OR", "BIT_XOR", "CEIL", "CEILING",
+                "CHAR", "CHAR_LENGTH", "CHARACTER_LENGTH", "COALESCE", "COMPRESS", "CONCAT", "CONCAT_WS", "CONV", "CONVERT",
+                "COS", "COT", "COUNT", "CRC32", "CURDATE", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURTIME",
+                "DATABASE", "DATE", "DATEDIFF", "DATE_FORMAT", "DAY", "DAYNAME", "DAYOFMONTH", "DAYOFWEEK", "DAYOFYEAR",
+                "DECODE", "DEGREES", "DES_DECRYPT", "DES_ENCRYPT", "DIV", "ELT", "EXP", "EXPORT_SET", "EXTRACT", "FIELD",
+                "FIND_IN_SET", "FLOOR", "FORMAT", "FOUND_ROWS", "FROM_BASE64", "FROM_DAYS", "FROM_UNIXTIME", "GREATEST",
+                "GROUP_CONCAT", "HEX", "HOUR", "IFNULL", "INET_ATON", "INET_NTOA", "INSERT", "INSTR", "INTERVAL", "ISNULL",
+                "JSON_ARRAY", "JSON_ARRAY_APPEND", "JSON_ARRAY_INSERT", "JSON_CONTAINS", "JSON_CONTAINS_PATH", "JSON_DEPTH",
+                "JSON_EXTRACT", "JSON_INSERT", "JSON_KEYS", "JSON_LENGTH", "JSON_MERGE", "JSON_OBJECT", "JSON_QUOTE",
+                "JSON_REMOVE", "JSON_REPLACE", "JSON_SEARCH", "JSON_SET", "JSON_TYPE", "JSON_UNQUOTE", "JSON_VALID", "LAST_DAY",
+                "LCASE", "LEAST", "LEFT", "LENGTH", "LN", "LOAD_FILE", "LOCATE", "LOG", "LOG10", "LOG2", "LOWER", "LPAD",
+                "LTRIM", "MAKE_SET", "MAKEDATE", "MAKETIME", "MASTER_POS_WAIT", "MAX", "MD5", "MID", "MIN", "MOD", "MONTH",
+                "MONTHNAME", "NOW", "NULLIF", "OCT", "OCTET_LENGTH", "ORD", "PASSWORD", "PERIOD_ADD", "PERIOD_DIFF", "PI",
+                "POSITION", "POW", "POWER", "QUARTER", "QUOTE", "RADIANS", "RAND", "REPEAT", "REPLACE", "REVERSE",
+                "RIGHT", "ROUND", "RPAD", "RTRIM", "SEC_TO_TIME", "SECOND", "SESSION_USER", "SHA", "SHA1", "SHA2", "SIGN",
+                "SIN", "SLEEP", "SOUNDEX", "SPACE", "SQRT", "STD", "STDDEV", "STDDEV_POP", "STDDEV_SAMP", "STRCMP",
+                "SUBDATE", "SUBSTR", "SUBSTRING", "SUBSTRING_INDEX", "SUM", "SYSDATE", "SYSTEM_USER", "TAN", "TIME",
+                "TIME_FORMAT", "TIME_TO_SEC", "TIMEDIFF", "TIMESTAMP", "TO_BASE64", "TO_DAYS", "TO_SECONDS", "TRIM",
+                "TRUNCATE", "UCASE", "UNCOMPRESS", "UNCOMPRESSED_LENGTH", "UNHEX", "UNIX_TIMESTAMP", "UPPER", "USER",
+                "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "UUID", "UUID_SHORT", "VALUES", "VARIANCE", "VAR_POP", "VAR_SAMP",
+                "VERSION", "WEEK", "WEEKDAY", "WEEKOFYEAR", "YEAR", "YEARWEEK"
+            ],
+
+            sqlServer: [
+                "ABS", "ACOS", "ASCII", "ASIN", "ATAN", "ATN2", "CEILING", "CHARINDEX", "CONCAT", "COS", "COT", "DEGREES",
+                "EXP", "FLOOR", "LEN", "LOG", "LOG10", "LOWER", "LTRIM", "NEWID", "PI", "POWER", "RAND", "REPLACE",
+                "REPLICATE", "REVERSE", "ROUND", "RTRIM", "SIGN", "SIN", "SPACE", "SQRT", "SQUARE", "SUBSTRING", "TAN",
+                "UPPER", "AVG", "COUNT", "GROUPING", "MAX", "MIN", "SUM", "STDEV", "VAR", "CHECKSUM_AGG",
+                "GROUPING_ID", "STDEV", "VAR", "BINARY_CHECKSUM", "CHECKSUM", "NEWSEQUENTIALID"
+            ],
+
+            sqlite: [
+                "ABS", "CHANGES", "CHAR", "COALESCE", "GLOB", "HEX", "IFNULL", "INSTR", "LAST_INSERT_ROWID", "LENGTH",
+                "LIKE", "LIKELIHOOD", "LIKELY", "LOAD_EXTENSION", "LOWER", "LTRIM", "MAX", "MIN", "NULLIF", "PRINTF",
+                "QUOTE", "RANDOM", "RANDOMBLOB", "REPLACE", "ROUND", "RTRIM", "SOUNDEX", "SUBSTR", "TOTAL_CHANGES",
+                "TRIM", "TYPEOF", "UNICODE", "UNLIKELY", "UPPER", "ZEROBLOB", "AVG", "COUNT", "GROUP_CONCAT",
+                "SUM", "TOTAL"
+            ],
+
+            amazonRedshift: [
+                "ABS", "ACOS", "APPROXIMATE", "ASIN", "ATAN", "ATAN2", "AVG", "BIT_AND", "BIT_OR", "CEIL", "CEILING",
+                "CHARINDEX", "COALESCE", "CONCAT", "COT", "COUNT", "COVAR_POP", "COVAR_SAMP", "DATE_PART", "DATEADD",
+                "DATEDIFF", "DATE_TRUNC", "DEGREES", "EXP", "FLOOR", "GREATEST", "LEAST", "LEN", "LENGTH", "LOG", "LOG10",
+                "LOWER", "LTRIM", "MAX", "MIN", "MOD", "NULLIF", "PI", "POWER", "RADIANS", "RANDOM", "REPLACE", "ROUND",
+                "RTRIM", "SIGN", "SIN", "SINH", "SQRT", "STDDEV_POP", "STDDEV_SAMP", "SUBSTRING", "SUM", "TAN", "TRIM",
+                "UPPER", "VAR_POP", "VAR_SAMP", "VARIANCE"
+            ],
+
+            googleBigQuery: [
+                "ABS", "ACOS", "ASIN", "ATAN", "ATAN2", "AVG", "CEIL", "CEILING", "COS", "COT", "COUNT", "DATE", "DATETIME",
+                "DAY", "DEGREES", "EXP", "FLOOR", "GREATEST", "LEAST", "LOG", "LOG10", "LOWER", "LTRIM", "MAX", "MIN", "MOD",
+                "PI", "POW", "POWER", "RADIANS", "RAND", "ROUND", "SIGN", "SIN", "SQRT", "STDDEV_POP", "STDDEV_SAMP", "SUM",
+                "TAN", "TO_BASE64", "TO_HEX", "TO_JSON_STRING", "TO_TIMESTAMP", "TRIM", "UPPER", "VAR_POP", "VAR_SAMP", "VARIANCE"
+            ],
+
+            ibmDb2: [
+                "ABS", "ACOS", "ASCII", "ASIN", "ATAN", "ATAN2", "AVG", "BIGINT", "BIN", "CEIL", "CEILING", "CHAR", "CHARS",
+                "COALESCE", "CONCAT", "COS", "COT", "COUNT", "COVAR_POP", "COVAR_SAMP", "CUME_DIST", "DATE", "DAY", "DAYS",
+                "DEGREES", "DENSE_RANK", "EXP", "FLOOR", "GREATEST", "HEX", "LEAST", "LN", "LOG", "LOG10", "LOWER", "LTRIM",
+                "MAX", "MIN", "MOD", "MONTH", "NULLIF", "PI", "POSITION", "POWER", "RADIANS", "RAND", "RANK", "REPLACE",
+                "ROUND", "RTRIM", "SECOND", "SIGN", "SIN", "SINH", "SQRT", "STDDEV", "STDDEV_POP", "STDDEV_SAMP", "SUBSTR",
+                "SUM", "TAN", "TIMESTAMP", "TO_CHAR", "TRANSLATE", "TRIM", "UPPER", "VAR_POP", "VAR_SAMP", "VARIANCE", "YEAR"
+            ],
+
+            ibmDb2ForI: [
+                "ABS", "ACOS", "ASCII", "ASIN", "ATAN", "ATAN2", "AVG", "BIGINT", "BIN", "CEIL", "CEILING", "CHAR", "CHARS",
+                "COALESCE", "CONCAT", "COS", "COT", "COUNT", "COVAR_POP", "COVAR_SAMP", "CUME_DIST", "DATE", "DAY", "DAYS",
+                "DEGREES", "DENSE_RANK", "EXP", "FLOOR", "GREATEST", "HEX", "LEAST", "LN", "LOG", "LOG10", "LOWER", "LTRIM",
+                "MAX", "MIN", "MOD", "MONTH", "NULLIF", "PI", "POSITION", "POWER", "RADIANS", "RAND", "RANK", "REPLACE",
+                "ROUND", "RTRIM", "SECOND", "SIGN", "SIN", "SINH", "SQRT", "STDDEV", "STDDEV_POP", "STDDEV_SAMP", "SUBSTR",
+                "SUM", "TAN", "TIMESTAMP", "TO_CHAR", "TRANSLATE", "TRIM", "UPPER", "VAR_POP", "VAR_SAMP", "VARIANCE", "YEAR"
+            ],
+
+            apacheHive: [
+                "ABS", "ACOS", "ADD_MONTHS", "AES_DECRYPT", "AES_ENCRYPT", "ASCII", "ASIN", "ATAN", "AVG", "BIN", "BROUND",
+                "CAST", "CEIL", "CEILING", "COALESCE", "CONCAT", "CONV", "CORR", "COS", "COT", "COUNT", "COVAR_POP",
+                "COVAR_SAMP", "CURRENT_DATE", "CURRENT_TIMESTAMP", "DATE_ADD", "DATE_SUB", "DATEDIFF", "DAY", "DAYOFMONTH",
+                "DEGREES", "DENSE_RANK", "EXP", "FLOOR", "FROM_UNIXTIME", "GREATEST", "HEX", "LEAST", "LENGTH", "LOG",
+                "LOG10", "LOWER", "LPAD", "LTRIM", "MAX", "MIN", "MOD", "MONTH", "NULLIF", "NTILE", "PI", "POSITION",
+                "POWER", "RADIANS", "RAND", "RANK", "REGEXP_REPLACE", "REPLACE", "REVERSE", "ROUND", "RTRIM", "SECOND",
+                "SIGN", "SIN", "SINH", "SQRT", "STDDEV", "STDDEV_POP", "STDDEV_SAMP", "SUBSTR", "SUM", "TAN", "TO_DATE",
+                "TO_UNIX_TIMESTAMP", "TRIM", "UNIX_TIMESTAMP", "UPPER", "VAR_POP", "VAR_SAMP", "VARIANCE", "WEEKOFYEAR", "YEAR"
+            ],
+
+            n1ql: [
+                "ABS", "ACOS", "APPROX_COUNT_DISTINCT", "ARRAY_APPEND", "ARRAY_CONCAT", "ARRAY_LENGTH", "ASIN", "ATAN",
+                "ATAN2", "AVG", "CEIL", "CEILING", "COALESCE", "CONCAT", "COS", "COT", "COUNT", "DATE_ADD_MILLIS",
+                "DATE_DIFF_MILLIS", "DATE_PART_MILLIS", "DATE_TRUNC_MILLIS", "DEGREES", "EXP", "FIRST_VALUE", "FLOOR",
+                "GREATEST", "LEAST", "LENGTH", "LOG", "LOG10", "LOWER", "LTRIM", "MAX", "MIN", "MOD", "PI", "POSITION",
+                "POWER", "RADIANS", "RAND", "REGEXP_CONTAINS", "REGEXP_LIKE", "REGEXP_REPLACE", "REPLACE", "REVERSE",
+                "ROUND", "RTRIM", "SIGN", "SIN", "SQRT", "STDDEV", "STR_TO_MILLIS", "SUBSTR", "SUM", "TAN", "TO_ARRAY",
+                "TRIM", "UPPER", "VARIANCE"
+            ],
+
+            singlestoreDb: [
+                "ABS", "ACOS", "ADDDATE", "AES_DECRYPT", "AES_ENCRYPT", "ASCII", "ASIN", "ATAN", "ATAN2", "AVG", "BENCHMARK",
+                "BIN", "BIT_COUNT", "BIT_LENGTH", "CEIL", "CEILING", "CHAR", "CHAR_LENGTH", "CHARACTER_LENGTH", "COALESCE",
+                "COMPRESS", "CONCAT", "CONCAT_WS", "CONV", "CONVERT", "COS", "COT", "COUNT", "CRC32", "CURDATE", "CURRENT_DATE",
+                "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURTIME", "DATABASE", "DATE", "DATEDIFF", "DAY", "DAYNAME", "DAYOFMONTH",
+                "DAYOFWEEK", "DAYOFYEAR", "DECODE", "DEGREES", "ELT", "EXP", "EXPORT_SET", "EXTRACT", "FIELD", "FIND_IN_SET",
+                "FLOOR", "FORMAT", "FOUND_ROWS", "FROM_BASE64", "FROM_DAYS", "FROM_UNIXTIME", "GREATEST", "GROUP_CONCAT",
+                "HEX", "HOUR", "IFNULL", "INSERT", "INSTR", "ISNULL", "JSON_ARRAY", "JSON_CONTAINS", "JSON_KEYS", "LCASE",
+                "LEAST", "LEFT", "LENGTH", "LN", "LOG", "LOG10", "LOG2", "LOWER", "LPAD", "LTRIM", "MAKE_SET", "MAKEDATE",
+                "MAKETIME", "MAX", "MD5", "MID", "MIN", "MOD", "MONTH", "MONTHNAME", "NOW", "NULLIF", "OCT", "ORD",
+                "POSITION", "POW", "POWER", "QUOTE", "RADIANS", "RAND", "REPEAT", "REPLACE", "REVERSE", "RIGHT", "ROUND",
+                "RPAD", "RTRIM", "SECOND", "SHA", "SHA1", "SHA2", "SIGN", "SIN", "SOUNDEX", "SPACE", "SQRT", "STRCMP",
+                "SUBDATE", "SUBSTR", "SUBSTRING", "SUBSTRING_INDEX", "SUM", "SYSDATE", "TAN", "TIME", "TO_BASE64", "TO_SECONDS",
+                "TRIM", "TRUNCATE", "UCASE", "UNCOMPRESS", "UNHEX", "UNIX_TIMESTAMP", "UPPER", "VERSION", "WEEK", "WEEKDAY",
+                "YEAR", "YEARWEEK"
+            ],
+
+            snowflake: [
+                "ABS", "ACOS", "ARRAY_AGG", "ARRAY_COMPACT", "ARRAY_CONTAINS", "ARRAY_INSERT", "ASIN", "ATAN", "ATAN2",
+                "AVG", "CEIL", "CEILING", "CHARINDEX", "CHECK_JSON", "CHECK_XML", "COALESCE", "COLLATE", "CONCAT", "CONVERT",
+                "COS", "COT", "COUNT", "CURRENT_DATE", "CURRENT_TIMESTAMP", "DATE", "DATE_PART", "DATE_TRUNC", "DAY",
+                "DECODE", "DEGREES", "DIV", "EXP", "EXTRACT", "FLOOR", "GREATEST", "LEAST", "LENGTH", "LN", "LOG", "LOG10",
+                "LOWER", "LTRIM", "MAX", "MIN", "MOD", "NTILE", "NVL", "NVL2", "PI", "POWER", "RADIANS", "RAND", "REPLACE",
+                "REVERSE", "ROUND", "RTRIM", "SIGN", "SIN", "SQRT", "STDDEV", "SUM", "TAN", "TO_ARRAY", "TO_BOOLEAN",
+                "TO_DECIMAL", "TO_NUMBER", "TO_VARIANT", "TRIM", "UPPER", "VARIANCE", "VAR_POP", "VAR_SAMP"
+            ],
+
+            apacheSpark: [
+                "ABS", "ACOS", "ADD_MONTHS", "APPROX_COUNT_DISTINCT", "APPROX_PERCENTILE", "ARRAY", "ARRAY_CONTAINS",
+                "ARRAY_DISTINCT", "ARRAY_EXCEPT", "ARRAY_INTERSECT", "ARRAY_JOIN", "ARRAY_MAX", "ARRAY_MIN", "ARRAY_POSITION",
+                "ARRAY_REMOVE", "ARRAY_REPEAT", "ARRAY_SORT", "ARRAY_UNION", "ASCII", "ASIN", "ATAN", "ATAN2", "AVG", "BASE64",
+                "BIN", "BIT_LENGTH", "CEIL", "CEILING", "COALESCE", "COLLECT_LIST", "COLLECT_SET", "CONCAT", "CONCAT_WS",
+                "CONV", "CORR", "COS", "COT", "COUNT", "COVAR_POP", "COVAR_SAMP", "CRC32", "CUME_DIST", "CURRENT_DATE",
+                "CURRENT_TIMESTAMP", "DATE", "DATE_ADD", "DATE_FORMAT", "DATE_SUB", "DATEDIFF", "DAY", "DAYOFMONTH",
+                "DAYOFWEEK", "DAYOFYEAR", "DEGREES", "DENSE_RANK", "E", "EXP", "EXPM1", "FLOOR", "FROM_UNIXTIME", "HEX",
+                "HOUR", "INITCAP", "INSTR", "ISNAN", "LAG", "LAST", "LAST_DAY", "LAST_VALUE", "LEAD", "LEAST", "LENGTH",
+                "LEVENSHTEIN", "LOG", "LOG10", "LOG1P", "LOG2", "LOWER", "LPAD", "LTRIM", "MAX", "MEAN", "MIN", "MINUTE",
+                "MODE", "MONTH", "MURMUR3_HASH", "NEXT_DAY", "NTILE", "PERCENT_RANK", "PI", "POSITIVE_INF", "POW", "QUARTER",
+                "RADIANS", "RAND", "RANK", "REGEXP_EXTRACT", "REGEXP_REPLACE", "REPLACE", "REVERSE", "ROUND", "ROW_NUMBER",
+                "RPAD", "RTRIM", "SECOND", "SIGN", "SIN", "SORT_ARRAY", "SOUNDEX", "SPACE", "SPARK_PARTITION_ID", "SPLIT",
+                "SQRT", "STDDEV", "STDDEV_POP", "STDDEV_SAMP", "STR_TO_MAP", "SUBSTR", "SUM", "TAN", "TO_DATE", "TO_JSON",
+                "TO_TIMESTAMP", "TO_UNIX_TIMESTAMP", "TRANSLATE", "TRIM", "TRUNC", "UNBASE64", "UNHEX", "UPPER", "VAR_POP",
+                "VAR_SAMP", "VARIANCE", "WEEKOFYEAR", "YEAR"
+            ],
+
+            trino: [
+                "ABS", "ACOS", "ARRAY_AGG", "ARRAY_DISTINCT", "ARRAY_JOIN", "ARRAY_MAX", "ARRAY_MIN", "ASIN", "ATAN",
+                "ATAN2", "AVG", "CEIL", "CEILING", "COALESCE", "CONCAT", "CONTAINS", "CORR", "COS", "COT", "COUNT",
+                "COVAR_POP", "COVAR_SAMP", "CUME_DIST", "DATE", "DATE_ADD", "DATE_DIFF", "DATE_PARSE", "DATE_TRUNC", "DEGREES",
+                "DENSE_RANK", "EXP", "FLOOR", "FROM_BASE64", "FROM_HEX", "GREATEST", "LAG", "LAST", "LEAD", "LEAST", "LENGTH",
+                "LN", "LOG", "LOG10", "LOWER", "MAX", "MIN", "MOD", "NTILE", "PI", "POSITION", "POWER", "RADIANS", "RANK",
+                "REPLACE", "REVERSE", "ROUND", "ROW_NUMBER", "SIGN", "SIN", "SPLIT", "SQRT", "STDDEV", "STDDEV_POP",
+                "STDDEV_SAMP", "SUBSTR", "SUM", "TAN", "TO_BASE64", "TO_HEX", "TO_UNIXTIME", "TRANSLATE", "TRIM", "UPPER",
+                "VAR_POP", "VAR_SAMP", "VARIANCE", "WIDTH_BUCKET"
+            ],
+
+            amazonAthena: [
+                "ABS", "ACOS", "APPROX_DISTINCT", "ARRAY", "ARRAY_AGG", "ARRAY_DISTINCT", "ARRAY_JOIN", "ASIN", "ATAN",
+                "ATAN2", "AVG", "CEIL", "CEILING", "COALESCE", "CONCAT", "COS", "COT", "COUNT", "DATE_ADD", "DATE_DIFF",
+                "DATE_PARSE", "DATE_TRUNC", "DEGREES", "EXP", "FLOOR", "GREATEST", "LEAST", "LENGTH", "LN", "LOG", "LOG10",
+                "LOWER", "MAX", "MIN", "MOD", "NTILE", "PI", "POSITION", "POWER", "RADIANS", "RAND", "REPLACE", "REVERSE",
+                "ROUND", "RTRIM", "SIGN", "SIN", "SPLIT", "SQRT", "STDDEV", "SUM", "TAN", "TO_BASE64", "TO_HEX", "TO_UNIXTIME",
+                "TRIM", "UPPER", "VARIANCE"
+            ]
+        };
+
+        // Regex patterns for specific expressions for each DB
+        static regexExpressionsByDB = {
+            sqlServer: [
+                /\bIIF\s*\(.+?\)/i,                                 // SQL Server specific IIF function
+                /\bTRY_CAST\s*\(.+?\sAS\s.+?\)/i,                   // SQL Server TRY_CAST function
+                /\bTRY_CONVERT\s*\(.+?,\s.+?\)/i,                   // SQL Server TRY_CONVERT function
+                /\bISNULL\s*\(.+?,\s.+?\)/i,                        // SQL Server ISNULL function
+                /\bFORMAT\s*\(.+?,\s'.+?'\)/i,                      // SQL Server FORMAT function
+                /\bGETDATE\s*\(\)/i,                                // SQL Server GETDATE function
+                /\bDATEDIFF\s*\(.+?,\s.+?,\s.+?\)/i,                // SQL Server DATEDIFF function
+                /\bROW_NUMBER\s*\(\)\s*OVER\s*\(ORDER\s*BY\s.+?\)/i,   // SQL Server ROW_NUMBER with OVER clause
+                /\bNEWSEQUENTIALID\s*\(\)/i,                        // SQL Server NEWSEQUENTIALID function
+                /\bFOR\s*XML\s*PATH\s*\(.+?\)/i,                    // SQL Server FOR XML PATH clause
+                /\bPARSENAME\s*\(.+?,\s.+?\)/i,                     // SQL Server PARSENAME function
+                /\bSCOPE_IDENTITY\s*\(\)/i,                         // SQL Server SCOPE_IDENTITY function
+                /\bWITH\s*\(NOLOCK\)/i,                             // SQL Server WITH (NOLOCK) hint
+                /\bOUTPUT\s.+?\s*INTO/i,                            // SQL Server OUTPUT INTO clause
+                /\bMERGE\s.+?\s*USING/i,                            // SQL Server MERGE statement
+                /\bCROSS\s*APPLY/i,                                 // SQL Server CROSS APPLY clause
+                /\bOUTER\s*APPLY/i                                  // SQL Server OUTER APPLY clause
+            ],
+
+            sqlite: [
+                /\bIFNULL\s*\(.+?,\s.+?\)/i,                        // SQLite IFNULL function
+                /\bSTRFTIME\s*\('.+?'.+?\)/i,                       // SQLite STRFTIME function
+                /\bRANDOM\s*\(\)/i,                                 // SQLite RANDOM function
+                /\bTYPEOF\s*\(.+?\)/i,                              // SQLite TYPEOF function
+                /\bTOTAL\s*\(.+?\)/i,                               // SQLite TOTAL function
+                /\bGLOB\s*'.+?'/i,                                  // SQLite GLOB pattern matching
+                /\bROWID\b/i,                                       // SQLite ROWID
+                /\bLIKELY\s*\(.+?\)/i,                              // SQLite LIKELY function
+                /\bUNLIKELY\s*\(.+?\)/i,                            // SQLite UNLIKELY function
+                /\bGROUP_CONCAT\s*\(.+?\)/i,                        // SQLite GROUP_CONCAT function
+                /\bREPLACE\s*\(.+?,\s.+?,\s.+?\)/i,                 // SQLite REPLACE function
+                /\bLENGTH\s*\(.+?\)/i,                              // SQLite LENGTH function
+                /\bSUBSTR\s*\(.+?,\s.+?,\s?.*?\)/i,                 // SQLite SUBSTR function
+                /\bCAST\s*\(.+?\sAS\s.+?\)/i,                       // SQLite CAST function
+                /\bINSTR\s*\(.+?,\s.+?\)/i                          // SQLite INSTR function
+            ],
+
+            postgresql: [
+                /\bCOALESCE\s*\(.+?\)/i,                            // PostgreSQL COALESCE function
+                /\bNULLIF\s*\(.+?,\s.+?\)/i,                        // PostgreSQL NULLIF function
+                /\bTO_CHAR\s*\(.+?,\s'.+?'\)/i,                     // PostgreSQL TO_CHAR function
+                /\bTO_TIMESTAMP\s*\(.+?,\s'.+?'\)/i,                // PostgreSQL TO_TIMESTAMP function
+                /\bARRAY_AGG\s*\(.+?\)/i,                           // PostgreSQL ARRAY_AGG function
+                /\bSTRING_AGG\s*\(.+?,\s.+?\)/i,                    // PostgreSQL STRING_AGG function
+                /\bGENERATE_SERIES\s*\(.+?,\s.+?,\s.+?\)/i,         // PostgreSQL GENERATE_SERIES function
+                /\bJSONB_BUILD_OBJECT\s*\(.+?\)/i,                  // PostgreSQL JSONB_BUILD_OBJECT function
+                /\bREGEXP_MATCHES\s*\(.+?,\s'.+?'\)/i,              // PostgreSQL REGEXP_MATCHES function
+                /\bILIKE\s*'.+?'/i,                                 // PostgreSQL ILIKE for case-insensitive matching
+                /\bRETURNING\s.+/i,                                 // PostgreSQL RETURNING clause
+                /\bDISTINCT\s*ON\s*\(.+?\)/i,                       // PostgreSQL DISTINCT ON clause
+                /\bOVER\s*\(PARTITION\s*BY\s.+?\s*ORDER\s*BY\s.+?\)/i, // PostgreSQL window functions with OVER clause
+                /\bHSTORE\s*\(.+?,\s?.+?\)/i,                       // PostgreSQL HSTORE function
+                /\bLEAST\s*\(.+?,\s?.*?\)/i,                        // PostgreSQL LEAST function
+                /\bGREATEST\s*\(.+?,\s?.*?\)/i,                     // PostgreSQL GREATEST function
+                /\bLATERAL\s*\(.+?\)/i,                             // PostgreSQL LATERAL subquery
+                /\bWITH\s*RECURSIVE/i                               // PostgreSQL WITH RECURSIVE clause
+            ],
+
+            oracle: [
+                /\bNVL\s*\(.+?,\s.+?\)/i,                           // Oracle NVL function
+                /\bNVL2\s*\(.+?,\s.+?,\s.+?\)/i,                    // Oracle NVL2 function
+                /\bDECODE\s*\(.+?,\s.+?,\s.+?,?.*?\)/i,             // Oracle DECODE function
+                /\bTO_DATE\s*\(.+?,\s'.+?'\)/i,                     // Oracle TO_DATE function
+                /\bSYSTIMESTAMP\b/i,                                // Oracle SYSTIMESTAMP
+                /\bSYSDATE\b/i,                                     // Oracle SYSDATE
+                /\bROWNUM\b/i,                                      // Oracle ROWNUM
+                /\bREGEXP_LIKE\s*\(.+?,\s'.+?'\)/i,                 // Oracle REGEXP_LIKE function
+                /\bCONNECT\s*BY\s*PRIOR\s.+?/i,                    // Oracle CONNECT BY PRIOR clause for hierarchical queries
+                /\bLAG\s*\(.+?,\s?.*?\)/i,                          // Oracle LAG function
+                /\bLEAD\s*\(.+?,\s?.*?\)/i,                         // Oracle LEAD function
+                /\bLEVEL\b/i,                                       // Oracle LEVEL for hierarchical queries
+                /\bGREATEST\s*\(.+?,?.*?\)/i,                       // Oracle GREATEST function
+                /\bLEAST\s*\(.+?,?.*?\)/i,                          // Oracle LEAST function
+                /\bROW_NUMBER\s*\(\)\s*OVER\s*\(ORDER\s*BY\s.+?\)/i, // Oracle ROW_NUMBER with OVER clause
+                /\bDUMP\s*\(.+?\)/i,                                // Oracle DUMP function
+                /\bEXTRACT\s*\(.+?\sFROM\s.+?\)/i,                  // Oracle EXTRACT function
+                /\bXMLTABLE\s*\(.+?\)/i,                            // Oracle XMLTABLE function
+                /\bTO_NUMBER\s*\(.+?\)/i,                           // Oracle TO_NUMBER function
+                /\bBULK\s*COLLECT\s*INTO/i                          // Oracle BULK COLLECT INTO clause
+            ],
+
+            mysql: [
+                /\bIF\s*\(.+?,\s.+?,\s.+?\)/i,                      // MySQL IF function
+                /\bIFNULL\s*\(.+?,\s.+?\)/i,                        // MySQL IFNULL function
+                /\bCONCAT_WS\s*\(.+?,\s?.*?\)/i,                    // MySQL CONCAT_WS function
+                /\bSUBSTRING_INDEX\s*\(.+?,\s.+?,\s.+?\)/i,         // MySQL SUBSTRING_INDEX function
+                /\bNOW\s*\(\)/i,                                    // MySQL NOW function
+                /\bDATE_ADD\s*\(.+?,\sINTERVAL\s.+?\)/i,            // MySQL DATE_ADD function with INTERVAL
+                /\bDATE_SUB\s*\(.+?,\sINTERVAL\s.+?\)/i,            // MySQL DATE_SUB function with INTERVAL
+                /\bGROUP_CONCAT\s*\(.+?\)/i,                        // MySQL GROUP_CONCAT function
+                /\bREGEXP\s*\(.+?,\s'.+?'\)/i,                      // MySQL REGEXP function
+                /\bUTC_TIMESTAMP\s*\(\)/i,                          // MySQL UTC_TIMESTAMP function
+                /\bCAST\s*\(.+?\sAS\s.+?\)/i,                       // MySQL CAST function
+                /\bINSTR\s*\(.+?,\s.+?\)/i,                         // MySQL INSTR function
+                /\bFIND_IN_SET\s*\(.+?,\s.+?\)/i,                   // MySQL FIND_IN_SET function
+                /\bREPLACE\s*\(.+?,\s.+?,\s.+?\)/i,                 // MySQL REPLACE function
+                /\bFORMAT\s*\(.+?,\s?.*?\)/i,                       // MySQL FORMAT function
+                /\bMATCH\s\(.+?\)\s*AGAINST\s*\(.+?\)/i            // MySQL FULLTEXT search with MATCH AGAINST
+            ],
+
+            amazonRedshift: [
+                /\bLISTAGG\s*\(.+?,\s.+?\)/i,                       // Redshift LISTAGG function
+                /\bPERCENTILE_CONT\s*\(.+?\sWITHIN\sGROUP\s\(ORDER\sBY\s.+?\)/i, // Redshift PERCENTILE_CONT function
+                /\bPERCENTILE_DISC\s*\(.+?\sWITHIN\sGROUP\s\(ORDER\sBY\s.+?\)/i, // Redshift PERCENTILE_DISC function
+                /\bAPPROXIMATE_COUNT_DISTINCT\s*\(.+?\)/i,          // Redshift APPROXIMATE_COUNT_DISTINCT function
+                /\bDATEADD\s*\(.+?,\s.+?,\s.+?\)/i,                 // Redshift DATEADD function
+                /\bDATEDIFF\s*\(.+?,\s.+?,\s.+?\)/i,                // Redshift DATEDIFF function
+                /\bTRIM\s*\(.+?\)/i,                                // Redshift TRIM function
+                /\bDISTINCT\s*ON\s*\(.+?\)/i,                      // Redshift DISTINCT ON clause
+                /\bTO_CHAR\s*\(.+?,\s'.+?'\)/i,                     // Redshift TO_CHAR function
+                /\bTO_TIMESTAMP\s*\(.+?,\s'.+?'\)/i,                // Redshift TO_TIMESTAMP function
+                /\bSYSDATE\s*\(\)/i,                                // Redshift SYSDATE function
+                /\bNVL\s*\(.+?,\s.+?\)/i,                           // Redshift NVL function
+                /\bNVL2\s*\(.+?,\s.+?,\s.+?\)/i,                    // Redshift NVL2 function
+                /\bGREATEST\s*\(.+?,\s?.*?\)/i,                     // Redshift GREATEST function
+                /\bLEAST\s*\(.+?,\s?.*?\)/i,                        // Redshift LEAST function
+                /\bTRUNC\s*\(.+?\)/i                                // Redshift TRUNC function
+            ],
+
+            googleBigQuery: [
+                /\bSAFE\.CONVERT\s*\(.+?\)/i,                       // BigQuery SAFE.CONVERT function
+                /\bSAFE\s*\(.+?\)/i,                                // BigQuery SAFE function
+                /\bARRAY_AGG\s*\(.+?\)/i,                           // BigQuery ARRAY_AGG function
+                /\bSTRING_AGG\s*\(.+?,\s.+?\)/i,                    // BigQuery STRING_AGG function
+                /\bFORMAT_TIMESTAMP\s*\('.+?'.+?\)/i,               // BigQuery FORMAT_TIMESTAMP function
+                /\bPARSE_TIMESTAMP\s*\('.+?'.+?\)/i,                // BigQuery PARSE_TIMESTAMP function
+                /\bGENERATE_ARRAY\s*\(.+?,\s.+?,\s.+?\)/i,          // BigQuery GENERATE_ARRAY function
+                /\bSTRUCT\s*\(.+?\)/i,                              // BigQuery STRUCT function
+                /\bWITHIN\s*DISTANCE\s*\(x, y, r\)/i,               // BigQuery WITHIN DISTANCE function
+                /\bREGEXP_CONTAINS\s*\(.+?,\s'.+?'\)/i,             // BigQuery REGEXP_CONTAINS function
+                /\bJSON_EXTRACT\s*\(.+?,\s'.+?'\)/i,                // BigQuery JSON_EXTRACT function
+                /\bTO_JSON_STRING\s*\(.+?\)/i,                      // BigQuery TO_JSON_STRING function
+                /\bCAST\s*\(.+?\sAS\s.+?\)/i,                       // BigQuery CAST function
+                /\bARRAY_LENGTH\s*\(.+?\)/i,                        // BigQuery ARRAY_LENGTH function
+                /\bFARM_FINGERPRINT\s*\(.+?\)/i,                    // BigQuery FARM_FINGERPRINT function
+                /\bST_DISTANCE\s*\(.+?,\s.+?\)/i                    // BigQuery spatial function ST_DISTANCE
+            ],
+
+            ibmDb2: [
+                /\bTRANSLATE\s*\(.+?,\s'.+?',\s'.+?'\)/i,           // IBM Db2 TRANSLATE function
+                /\bTO_DATE\s*\(.+?,\s'.+?'\)/i,                     // IBM Db2 TO_DATE function
+                /\bSYSIBM\.SYSDUMMY1/i,                             // IBM Db2 SYSIBM.SYSDUMMY1 table
+                /\bDECODE\s*\(.+?,\s.+?,\s.+?,?.*?\)/i,             // IBM Db2 DECODE function
+                /\bXMLSERIALIZE\s*\(.+?\)/i,                        // IBM Db2 XMLSERIALIZE function
+                /\bXMLCAST\s*\(.+?\)/i,                             // IBM Db2 XMLCAST function
+                /\bXMLEXISTS\s*\(.+?\)/i,                           // IBM Db2 XMLEXISTS function
+                /\bXMLTABLE\s*\(.+?\)/i,                            // IBM Db2 XMLTABLE function
+                /\bGENERATE_UNIQUE\s*\(\)/i,                        // IBM Db2 GENERATE_UNIQUE function
+                /\bWITH\s*RRN\s*\(.*?\)/i,                          // IBM Db2 WITH RRN (Relative Record Number)
+                /\bTRUNCATE\s*\(.+?\)/i,                            // IBM Db2 TRUNCATE function
+                /\bREPLACE\s*\(.+?,\s.+?,\s.+?\)/i,                 // IBM Db2 REPLACE function
+                /\bTIMESTAMPDIFF\s*\(.+?\)/i,                       // IBM Db2 TIMESTAMPDIFF function
+                /\bMERGE\s.+?\s*USING/i,                            // IBM Db2 MERGE statement
+                /\bFETCH\s*FIRST\s*\d+\s*ROWS\s*ONLY/i              // IBM Db2 FETCH FIRST n ROWS ONLY
+            ],
+
+            ibmDb2ForI: [
+                /\bVALUES\s*\(.+?\)/i,                              // IBM Db2 for i VALUES clause
+                /\bQSYS2\.SYSPARTITIONSTAT/i,                       // IBM Db2 for i system table
+                /\bLATERAL\s*\(.+?\)/i,                             // IBM Db2 for i LATERAL clause
+                /\bXMLGROUP\s*\(.+?\)/i,                            // IBM Db2 for i XMLGROUP function
+                /\bLISTAGG\s*\(.+?,\s.+?\)/i,                       // IBM Db2 for i LISTAGG function
+                /\bRANK\s*\(\)/i,                                   // IBM Db2 for i RANK function
+                /\bDENSE_RANK\s*\(\)/i,                             // IBM Db2 for i DENSE_RANK function
+                /\bROW_NUMBER\s*\(\)/i,                             // IBM Db2 for i ROW_NUMBER function
+                /\bSYSIBMADM/i,                                     // IBM Db2 for i administrative views
+                /\bGENERATE_UNIQUE\s*\(\)/i,                        // IBM Db2 for i GENERATE_UNIQUE function
+                /\bTO_NUMBER\s*\(.+?\)/i,                           // IBM Db2 for i TO_NUMBER function
+                /\bEXTRACT\s*\(.+?\s*FROM\s*.+?\)/i,                // IBM Db2 for i EXTRACT function
+                /\bXMLSERIALIZE\s*\(.+?\)/i                         // IBM Db2 for i XMLSERIALIZE function
+            ],
+
+            apacheHive: [
+                /\bMAPJOIN\s.+/i,                                   // Hive MAPJOIN hint
+                /\bCLUSTER\s*BY\s.+/i,                              // Hive CLUSTER BY clause
+                /\bDISTRIBUTE\s*BY\s.+/i,                           // Hive DISTRIBUTE BY clause
+                /\bSORT\s*BY\s.+/i,                                 // Hive SORT BY clause
+                /\bCOLLECTION_ITEMS\s*\(.+?\)/i,                    // Hive COLLECTION_ITEMS function
+                /\bEXPLODE\s*\(.+?\)/i,                             // Hive EXPLODE function
+                /\bMAP\s*\(.+?\)/i,                                 // Hive MAP function
+                /\bREDUCE\s*\(.+?\)/i,                              // Hive REDUCE function
+                /\bTRANSFORM\s*\(.+?\)/i,                           // Hive TRANSFORM function
+                /\bTABLESAMPLE\s*\(.+?\)/i,                         // Hive TABLESAMPLE clause
+                /\bCAST\s*\(.+?\s*AS\s*.+?\)/i,                     // Hive CAST function
+                /\bTO_DATE\s*\(.+?\)/i,                             // Hive TO_DATE function
+                /\bROW_NUMBER\s*\(\)\s*OVER\s*\(ORDER\s*BY\s.+?\)/i, // Hive ROW_NUMBER with OVER clause
+                /\bLATERAL\s*VIEW\s*EXPLODE/i,                      // Hive LATERAL VIEW with EXPLODE
+                /\bCOLLECT_LIST\s*\(.+?\)/i                         // Hive COLLECT_LIST function
+            ],
+
+            n1ql: [
+                /\bARRAY\s*\(.+?\)/i,                               // N1QL ARRAY function
+                /\bLETTING\b/i,                                     // N1QL LETTING clause
+                /\bMETA\s*\(.+?\)/i,                                // N1QL META function
+                /\bNEST\s*\(.+?\)/i,                                // N1QL NEST function
+                /\bUNNEST\s*\(.+?\)/i,                              // N1QL UNNEST function
+                /\bARRAY_CONCAT\s*\(.+?\)/i,                        // N1QL ARRAY_CONCAT function
+                /\bARRAY_LENGTH\s*\(.+?\)/i,                        // N1QL ARRAY_LENGTH function
+                /\bARRAY_APPEND\s*\(.+?\)/i,                        // N1QL ARRAY_APPEND function
+                /\bARRAY_PREPEND\s*\(.+?\)/i,                       // N1QL ARRAY_PREPEND function
+                /\bFIRST_VALUE\s*\(.+?\)/i,                         // N1QL FIRST_VALUE function
+                /\bARRAY_FLATTEN\s*\(.+?,\s.+?\)/i,                 // N1QL ARRAY_FLATTEN function
+                /\bCONTAINS\s*\(.+?,\s.+?\)/i,                      // N1QL CONTAINS function
+                /\bCOUNTN\s*\(.+?\)/i,                              // N1QL COUNTN function
+                /\bPOSITION\s*\(.+?,\s.+?\)/i,                      // N1QL POSITION function
+                /\bREGEXP_CONTAINS\s*\(.+?,\s'.+?'\)/i              // N1QL REGEXP_CONTAINS function
+            ],
+
+            singlestoreDb: [
+                /\bIF\s*\(.+?,\s.+?,\s.+?\)/i,                      // SingleStoreDB IF function
+                /\bJSON_OBJECT\s*\(.+?\)/i,                         // SingleStoreDB JSON_OBJECT function
+                /\bJSON_ARRAY\s*\(.+?\)/i,                          // SingleStoreDB JSON_ARRAY function
+                /\bJSON_VALUE\s*\(.+?\)/i,                          // SingleStoreDB JSON_VALUE function
+                /\bDATE_FORMAT\s*\(.+?,\s'.+?'\)/i,                 // SingleStoreDB DATE_FORMAT function
+                /\bGROUP_CONCAT\s*\(.+?\)/i,                        // SingleStoreDB GROUP_CONCAT function
+                /\bREGEXP\s*\(.+?,\s'.+?'\)/i,                      // SingleStoreDB REGEXP function
+                /\bUTC_TIMESTAMP\s*\(\)/i,                          // SingleStoreDB UTC_TIMESTAMP function
+                /\bUUID\s*\(\)/i,                                   // SingleStoreDB UUID function
+                /\bIFNULL\s*\(.+?,\s.+?\)/i,                        // SingleStoreDB IFNULL function
+                /\bSUBSTRING_INDEX\s*\(.+?,\s.+?,\s.+?\)/i,         // SingleStoreDB SUBSTRING_INDEX function
+                /\bCONCAT_WS\s*\(.+?,\s?.*?\)/i,                    // SingleStoreDB CONCAT_WS function
+                /\bLOCATE\s*\(.+?,\s.+?\)/i,                        // SingleStoreDB LOCATE function
+                /\bLENGTH\s*\(.+?\)/i,                              // SingleStoreDB LENGTH function
+                /\bFIELD\s*\(.+?,\s.+?\)/i                          // SingleStoreDB FIELD function
+            ],
+
+            snowflake: [
+                /\bIFF\s*\(.+?,\s.+?,\s.+?\)/i,                     // Snowflake IFF function
+                /\bARRAY_AGG\s*\(.+?\)/i,                           // Snowflake ARRAY_AGG function
+                /\bOBJECT_AGG\s*\(.+?\)/i,                          // Snowflake OBJECT_AGG function
+                /\bTO_ARRAY\s*\(.+?\)/i,                            // Snowflake TO_ARRAY function
+                /\bTO_VARIANT\s*\(.+?\)/i,                          // Snowflake TO_VARIANT function
+                /\bTO_JSON\s*\(.+?\)/i,                             // Snowflake TO_JSON function
+                /\bTO_TIMESTAMP\s*\(.+?\)/i,                        // Snowflake TO_TIMESTAMP function
+                /\bTRY_CAST\s*\(.+?\sAS\s.+?\)/i,                   // Snowflake TRY_CAST function
+                /\bSEQ4\s*\(\)/i,                                   // Snowflake SEQ4 function
+                /\bUNIFORM\s*\(\)/i,                                // Snowflake UNIFORM function
+                /\bLATERAL\s*VIEW/i,                                // Snowflake LATERAL VIEW
+                /\bQUALIFY\b/i,                                     // Snowflake QUALIFY clause
+                /\bPIVOT\b/i,                                       // Snowflake PIVOT clause
+                /\bUNPIVOT\b/i,                                     // Snowflake UNPIVOT clause
+                /\bFLATTEN\s*\(.+?\)/i,                             // Snowflake FLATTEN function
+                /\bARRAY_TO_STRING\s*\(.+?,\s'.+?'\)/i              // Snowflake ARRAY_TO_STRING function
+            ],
+
+            apacheSpark: [
+                /\bAPPROX_COUNT_DISTINCT\s*\(.+?\)/i,               // Apache Spark APPROX_COUNT_DISTINCT function
+                /\bPERCENTILE_APPROX\s*\(.+?,\s.+?\)/i,             // Apache Spark PERCENTILE_APPROX function
+                /\bARRAY_CONTAINS\s*\(.+?\)/i,                      // Apache Spark ARRAY_CONTAINS function
+                /\bMAP\s*\(.+?\)/i,                                 // Apache Spark MAP function
+                /\bTRANSFORM\s*\(.+?\)/i,                           // Apache Spark TRANSFORM function
+                /\bEXPLODE\s*\(.+?\)/i,                             // Apache Spark EXPLODE function
+                /\bMAP_VALUES\s*\(.+?\)/i,                          // Apache Spark MAP_VALUES function
+                /\bAGGREGATE\s*\(.+?\)/i,                           // Apache Spark AGGREGATE function
+                /\bGROUPING\s*\(.+?\)/i,                            // Apache Spark GROUPING function
+                /\bSORT_ARRAY\s*\(.+?\)/i,                          // Apache Spark SORT_ARRAY function
+                /\bWITH\s*CUBE/i,                                   // Apache Spark WITH CUBE clause
+                /\bWITH\s*ROLLUP/i,                                 // Apache Spark WITH ROLLUP clause
+                /\bCOLLECT_LIST\s*\(.+?\)/i,                        // Apache Spark COLLECT_LIST function
+                /\bCOLLECT_SET\s*\(.+?\)/i,                         // Apache Spark COLLECT_SET function
+                /\bLEAD\s*\(.+?,\s?.*?\)/i,                         // Apache Spark LEAD function
+                /\bLAG\s*\(.+?,\s?.*?\)/i                           // Apache Spark LAG function
+            ],
+
+            trino: [
+                /\bAPPROX_DISTINCT\s*\(.+?\)/i,                     // Trino APPROX_DISTINCT function
+                /\bPERCENTILE_CONT\s*\(.+?\s*WITHIN\s*GROUP\s*\(ORDER\s*BY\s*.+?\)/i, // Trino PERCENTILE_CONT function
+                /\bPERCENTILE_DISC\s*\(.+?\s*WITHIN\s*GROUP\s*\(ORDER\s*BY\s*.+?\)/i, // Trino PERCENTILE_DISC function
+                /\bAPPROX_PERCENTILE\s*\(.+?,\s.+?\)/i,             // Trino APPROX_PERCENTILE function
+                /\bMAP_AGG\s*\(.+?\)/i,                             // Trino MAP_AGG function
+                /\bJSON_ARRAY_LENGTH\s*\(.+?\)/i,                   // Trino JSON_ARRAY_LENGTH function
+                /\bTO_UNIXTIME\s*\(.+?\)/i,                         // Trino TO_UNIXTIME function
+                /\bDATE_PARSE\s*\(.+?,\s'.+?'\)/i,                  // Trino DATE_PARSE function
+                /\bDATE_ADD\s*\(.+?,\s*INTERVAL\s*.+?\)/i,          // Trino DATE_ADD function
+                /\bTRY_CAST\s*\(.+?\s*AS\s*.+?\)/i,                 // Trino TRY_CAST function
+                /\bCAST\s*\(.+?\s*AS\s*JSON\)/i,                    // Trino CAST AS JSON function
+                /\bJSON_PARSE\s*\(.+?\)/i,                          // Trino JSON_PARSE function
+                /\bUNNEST\s*\(.+?\)/i,                              // Trino UNNEST function
+                /\bLATERAL\s*VIEW/i,                                // Trino LATERAL VIEW
+                /\bCROSS\s*JOIN\s*UNNEST/i,                         // Trino CROSS JOIN UNNEST
+                /\bELEMENT_AT\s*\(.+?,\s.+?\)/i                     // Trino ELEMENT_AT function
+            ],
+
+            amazonAthena: [
+                /\bARRAY\s*\(.+?\)/i,                               // Amazon Athena ARRAY function
+                /\bMAP\s*\(.+?\)/i,                                 // Amazon Athena MAP function
+                /\bCARDINALITY\s*\(.+?\)/i,                         // Amazon Athena CARDINALITY function
+                /\bCAST\s*\(.+?\s*AS\s*.+?\)/i,                     // Amazon Athena CAST function
+                /\bAPPROX_DISTINCT\s*\(.+?\)/i,                     // Amazon Athena APPROX_DISTINCT function
+                /\bPERCENTILE_CONT\s*\(.+?\s*WITHIN\s*GROUP\s*\(ORDER\s*BY\s*.+?\)/i, // Amazon Athena PERCENTILE_CONT function
+                /\bPERCENTILE_DISC\s*\(.+?\s*WITHIN\s*GROUP\s*\(ORDER\s*BY\s*.+?\)/i, // Amazon Athena PERCENTILE_DISC function
+                /\bJSON_PARSE\s*\(.+?\)/i,                          // Amazon Athena JSON_PARSE function
+                /\bTO_UNIXTIME\s*\(.+?\)/i,                         // Amazon Athena TO_UNIXTIME function
+                /\bDATE_ADD\s*\(.+?,\s*INTERVAL\s*.+?\)/i,          // Amazon Athena DATE_ADD function
+                /\bFROM_UNIXTIME\s*\(.+?\)/i,                       // Amazon Athena FROM_UNIXTIME function
+                /\bUNNEST\s*\(.+?\)/i,                              // Amazon Athena UNNEST function
+                /\bREPLACE\s*\(.+?,\s.+?,\s.+?\)/i,                 // Amazon Athena REPLACE function
+                /\bCONCAT_WS\s*\(.+?,\s?.*?\)/i,                    // Amazon Athena CONCAT_WS function
+                /\bREGEXP_EXTRACT\s*\(.+?,\s'.+?'\)/i               // Amazon Athena REGEXP_EXTRACT function
+            ]
+        };
+
+        static uniqueStructuresByDB = {
+            sqlServer: [
+                /\s*PARSENAME\s*\(\s*.+?,\s*\d+\s*\)/i,  // PARSENAME function
+                /\s*SCOPE_IDENTITY\s*\(\s*\)/i,  // SCOPE_IDENTITY function
+                /\s*WITH\s*\(\s*NOLOCK\s*\)/i,  // WITH (NOLOCK) hint
+                /\s*OUTPUT\s+INSERTED\..+?\s+INTO\s+/i,  // OUTPUT INTO for capturing results
+                /\s*MERGE\s+INTO\s+.+\s+USING\s+/i,  // MERGE statement
+                /\s*NEWSEQUENTIALID\s*\(\s*\)/i,  // NEWSEQUENTIALID function
+                /\s*FOR\s+XML\s+PATH\s*\(.+?\)/i,  // FOR XML PATH
+                /\s*CROSS\s+APPLY\s+/i,  // CROSS APPLY clause
+                /\s*OUTER\s+APPLY\s+/i,  // OUTER APPLY clause
+                /\s*TRY_PARSE\s*\(\s*.+?\s+AS\s+.+?\s*\)/i,  // TRY_PARSE function
+            ],
+
+            sqlite: [
+                /\s*WITHOUT\s+ROWID\s*/i,  // WITHOUT ROWID table
+                /\s*GLOB\s*\'.*?\'\s*/i,  // GLOB pattern matching
+                /\s*LIKELY\s*\(.+?\)\s*/i,  // LIKELY function
+                /\s*UNLIKELY\s*\(.+?\)\s*/i,  // UNLIKELY function
+                /\s*TOTAL\s*\(.+?\)\s*/i,  // TOTAL function
+            ],
+
+            postgresql: [
+                /\s*::\s*[a-zA-Z0-9_]+\s*/i,  // Type casting with ::, allowing spaces around the operator
+                /\s*GENERATE_SERIES\s*\(\s*.+?,\s*.+?,\s*.+?\s*\)/i,  // GENERATE_SERIES function
+                /\s*HSTORE\s*\(\s*.+?,\s*.+?\s*\)/i,  // HSTORE function
+                /\s*JSONB_BUILD_OBJECT\s*\(\s*.+?\s*\)/i,  // JSONB_BUILD_OBJECT function
+                /\s*RETURNING\s+.+/i,  // RETURNING clause
+                /\s*DISTINCT\s+ON\s*\(.+?\)\s*/i,  // DISTINCT ON clause
+                /\s*WITH\s+RECURSIVE\s*/i,  // WITH RECURSIVE clause
+                /\s*LATERAL\s*\(\s*/i,  // LATERAL subquery
+                /\s*EXPLAIN\s+ANALYZE\s*/i,  // EXPLAIN ANALYZE
+                /\s*PERFORM\s+.+/i,  // PERFORM for executing functions without returning results
+            ],
+
+            oracle: [
+                /\s*CONNECT\s+BY\s+PRIOR\s*/i,  // CONNECT BY PRIOR clause
+                /\s*LEVEL\s*/i,  // LEVEL in hierarchical queries
+                /\s*MODEL\s+DIMENSION\s+BY\s+.+?\s+MEASURES\s+.+?/i,  // MODEL clause
+                /\s*START\s+WITH\s+.+?\s+CONNECT\s+BY\s*/i,  // START WITH ... CONNECT BY for hierarchical queries
+                /\s*RETURN\s+RETURNING\s+.+?\s+INTO\s*/i,  // RETURN INTO clause
+            ],
+
+            mysql: [
+                /\s*FIND_IN_SET\s*\(\s*.+?,\s*.+?\s*\)/i,  // FIND_IN_SET function
+                /\s*GROUP_CONCAT\s*\(\s*.+?\s*\)/i,  // GROUP_CONCAT function
+                /\s*REGEXP\s*\'.+?\'\s*/i,  // REGEXP for regular expression matching
+                /\s*MATCH\s*\(\s*.+?\s*\)\s*AGAINST\s*\(\s*.+?\s*\)/i,  // MATCH AGAINST for full-text search
+                /\s*FROM_UNIXTIME\s*\(\s*.+?\s*\)/i,  // FROM_UNIXTIME function
+                /\s*CONVERT_TZ\s*\(\s*.+?,\s*.+?,\s*.+?\s*\)/i,  // CONVERT_TZ function for time zone conversion
+                /\s*INSTR\s*\(\s*.+?,\s*.+?\s*\)/i,  // INSTR function
+            ],
+
+            amazonRedshift: [
+                /\s*APPROXIMATE_COUNT_DISTINCT\s*\(\s*.+?\s*\)/i,  // APPROXIMATE_COUNT_DISTINCT function
+                /\s*DISTKEY\s*/i,  // Distribution key for tables
+                /\s*SORTKEY\s*/i,  // Sort key for tables
+                /\s*INTERLEAVED\s*SORTKEY\s*/i,  // Interleaved Sortkey
+                /\s*ALTER\s*TABLE\s*APPEND\s*/i,  // ALTER TABLE APPEND
+            ],
+
+            googleBigQuery: [
+                /\s*FORMAT_TIMESTAMP\s*\(\'.+?\'.+?\s*\)/i,  // FORMAT_TIMESTAMP function
+                /\s*PARSE_TIMESTAMP\s*\(\'.+?\'.+?\s*\)/i,  // PARSE_TIMESTAMP function
+                /\s*FARM_FINGERPRINT\s*\(\s*.+?\s*\)/i,  // FARM_FINGERPRINT function
+                /\s*TO_JSON_STRING\s*\(\s*.+?\s*\)/i,  // TO_JSON_STRING function
+                /\s*WITHIN\s+.+?\s+DISTANCE\s*/i,  // WITHIN DISTANCE for geographic data
+                /\s*ST_DISTANCE\s*\(\s*.+?,\s*.+?\s*\)/i,  // ST_DISTANCE for spatial data
+            ],
+
+            ibmDb2: [
+                /\s*GENERATE_UNIQUE\s*\(\s*\)/i,  // GENERATE_UNIQUE function
+                /\s*WITH\s*RRN\s*\(.*?\)\s*/i,  // WITH RRN (Relative Record Number)
+                /\s*TIMESTAMPDIFF\s*\(\s*.+?\s*\)/i,  // TIMESTAMPDIFF function
+                /\s*XMLSERIALIZE\s*\(\s*.+?\s*\)/i,  // XMLSERIALIZE function
+                /\s*XMLCAST\s*\(\s*.+?\s*\)/i,  // XMLCAST function
+                /\s*XMLEXISTS\s*\(\s*.+?\s*\)/i,  // XMLEXISTS function
+            ],
+
+            ibmDb2ForI: [
+                /\s*XMLGROUP\s*\(\s*.+?\s*\)/i,  // XMLGROUP function
+                /\s*QSYS2\.SYSPARTITIONSTAT\s*/i,  // IBM Db2 for i system table
+                /\s*SYSIBMADM\s*/i,  // Administrative views
+                /\s*XMLSERIALIZE\s*\(\s*.+?\s*\)/i,  // XMLSERIALIZE function
+            ],
+
+            apacheHive: [
+                /\s*MAPJOIN\s+.+/i,  // MAPJOIN hint
+                /\s*CLUSTER\s+BY\s+.+/i,  // CLUSTER BY clause
+                /\s*DISTRIBUTE\s+BY\s+.+/i,  // DISTRIBUTE BY clause
+                /\s*SORT\s+BY\s+.+/i,  // SORT BY clause
+                /\s*TABLESAMPLE\s*\(\s*.+?\s*\)/i,  // TABLESAMPLE clause
+                /\s*COLLECT_LIST\s*\(\s*.+?\s*\)/i,  // COLLECT_LIST function
+                /\s*COLLECT_SET\s*\(\s*.+?\s*\)/i,  // COLLECT_SET function
+                /\s*TRANSFORM\s+.+?\s+USING\s*/i,  // TRANSFORM with USING
+                /\s*SORTED\s+BY\s*\(\s*.+?\s*\)/i,  // SORTED BY clause
+            ],
+
+            n1ql: [
+                /\s*LETTING\s*/i,  // LETTING clause
+                /\s*META\s*\(\s*.+?\s*\)/i,  // META function
+                /\s*NEST\s*\(\s*.+?\s*\)/i,  // NEST function
+                /\s*ARRAY_FLATTEN\s*\(\s*.+?,\s*.+?\s*\)/i,  // ARRAY_FLATTEN function
+                /\s*ARRAY_CONCAT\s*\(\s*.+?\s*\)/i,  // ARRAY_CONCAT function
+                /\s*ARRAY_LENGTH\s*\(\s*.+?\s*\)/i,  // ARRAY_LENGTH function
+                /\s*POSITION\s*\(\s*.+?,\s*.+?\s*\)/i,  // POSITION function
+            ],
+
+            singlestoreDb: [
+                /\s*SUBSTRING_INDEX\s*\(\s*.+?,\s*.+?,\s*.+?\s*\)/i,  // SUBSTRING_INDEX function
+                /\s*CONCAT_WS\s*\(\s*.+?,\s*.+?\s*\)/i,  // CONCAT_WS function
+            ],
+
+            snowflake: [
+                /\s*SEQ4\s*\(\s*\)/i,  // SEQ4 function
+                /\s*UNIFORM\s*\(\s*\)/i,  // UNIFORM function
+                /\s*QUALIFY\s*/i,  // QUALIFY clause
+                /\s*FLATTEN\s*\(\s*.+?\s*\)/i,  // FLATTEN function
+                /\s*TO_ARRAY\s*\(\s*.+?\s*\)/i,  // TO_ARRAY function
+            ],
+
+            apacheSpark: [
+                /\s*MAP_VALUES\s*\(\s*.+?\s*\)/i,  // MAP_VALUES function
+                /\s*ARRAY_CONTAINS\s*\(\s*.+?\s*\)/i,  // ARRAY_CONTAINS function
+                /\s*PERCENTILE_APPROX\s*\(\s*.+?,\s*.+?\s*\)/i,  // PERCENTILE_APPROX function
+                /\s*SORT_ARRAY\s*\(\s*.+?\s*\)/i,  // SORT_ARRAY function
+                /\s*TRANSFORM\s*\(\s*.+?\s*\)/i,  // TRANSFORM function
+                /\s*EXPLODE\s*\(\s*.+?\s*\)/i,  // EXPLODE function
+                /\s*GROUPING\s*\(\s*.+?\s*\)/i,  // GROUPING function
+                /\s*AGGREGATE\s*\(\s*.+?\s*\)/i,  // AGGREGATE function
+                /\s*COLLECT_LIST\s*\(\s*.+?\s*\)/i,  // COLLECT_LIST function
+                /\s*COLLECT_SET\s*\(\s*.+?\s*\)/i,  // COLLECT_SET function
+            ],
+
+            trino: [
+                /\s*APPROX_PERCENTILE\s*\(\s*.+?,\s*.+?\s*\)/i,  // APPROX_PERCENTILE function
+                /\s*ELEMENT_AT\s*\(\s*.+?,\s*.+?\s*\)/i,  // ELEMENT_AT function
+                /\s*JSON_PARSE\s*\(\s*.+?\s*\)/i,  // JSON_PARSE function
+                /\s*CROSS\s+JOIN\s+UNNEST\s*/i,  // CROSS JOIN UNNEST
+            ],
+
+            amazonAthena: [
+                /\s*CARDINALITY\s*\(\s*.+?\s*\)/i,  // CARDINALITY function
+                /\s*REGEXP_EXTRACT\s*\(\s*.+?,\s*'.+?'\s*\)/i,  // REGEXP_EXTRACT function
+                /\s*CONCAT_WS\s*\(\s*.+?,\s*.+?\s*\)/i,  // CONCAT_WS function
+            ]
+        };
+
+        constructor() {
+            this.keywordDBMapping = SQLDialectDetector.keywordDBMapping;
+            this.builtInFunctionsByDB = SQLDialectDetector.builtInFunctionsByDB;
+            this.regexExpressionsByDB = SQLDialectDetector.regexExpressionsByDB;
+            this.uniqueStructuresByDB = SQLDialectDetector.uniqueStructuresByDB;
+
+            this.priorProbabilities = {
+                mysql: 0.25,           // MySQL is one of the most popular databases, especially for web applications.
+                postgresql: 0.2,       // PostgreSQL is highly popular, especially in the developer community.
+                sqlServer: 0.15,       // SQL Server is widely used in enterprise environments.
+                oracle: 0.15,          // Oracle is popular in large enterprises, especially for critical applications.
+                sqlite: 0.1,           // SQLite is very common in embedded systems and small applications.
+                amazonRedshift: 0.05,  // Amazon Redshift is popular for data warehousing in the cloud.
+                googleBigQuery: 0.05,  // Google BigQuery is widely used in big data and analytics.
+                snowflake: 0.03,       // Snowflake is gaining popularity in cloud data warehousing.
+                ibmDb2: 0.02,          // IBM Db2 is used in some large enterprises.
+                trino: 0.02,           // Trino (formerly PrestoSQL) is popular in big data queries.
+                amazonAthena: 0.02,    // Amazon Athena is often used for querying data in S3.
+                apacheHive: 0.01,      // Apache Hive is used in Hadoop ecosystems for big data.
+                n1ql: 0.01,            // N1QL is associated with Couchbase for NoSQL operations.
+                singlestoreDb: 0.01,   // SingleStore (formerly MemSQL) is used in real-time analytics.
+                apacheSpark: 0.01,     // Apache Spark is used for large-scale data processing.
+                ibmDb2ForI: 0.01       // IBM Db2 for i is used in legacy systems.
+            };
+
+        }
+
+        calculateFeatureProbability(sqlQuery, dialect, featureList) {
+            let score = 0;
+
+            featureList.forEach(feature => {
+                const regex = new RegExp(`\\b${feature}\\b`, 'i');
+                if (regex.test(sqlQuery)) {
+                    score += 1;
+                }
+            });
+
+            return score;
+        }
+
+        calculateLikelihood(sqlQuery, dialect) {
+            let likelihood = 1;
+
+            // Keyword-based probability
+            if (this.keywordDBMapping[dialect]) {
+                const keywordScore = this.calculateFeatureProbability(sqlQuery, dialect, this.keywordDBMapping[dialect]);
+                likelihood *= keywordScore > 0 ? keywordScore : 0.1;  // Small boost even if no match to account for missing info
+            }
+
+            // Function-based probability
+            if (this.builtInFunctionsByDB[dialect]) {
+                const functionScore = this.calculateFeatureProbability(sqlQuery, dialect, this.builtInFunctionsByDB[dialect]);
+                likelihood *= functionScore > 0 ? functionScore : 0.1;
+            }
+
+            // Expression-based probability
+            if (this.regexExpressionsByDB[dialect]) {
+                const expressionMatches = this.regexExpressionsByDB[dialect].reduce((count, regex) => count + (regex.test(sqlQuery) ? 1 : 0), 0);
+                likelihood *= expressionMatches > 0 ? expressionMatches : 0.1;
+            }
+
+            // Unique structures probability
+            if (this.uniqueStructuresByDB[dialect]) {
+                const uniqueStructureMatches = this.uniqueStructuresByDB[dialect].reduce((count, regex) => count + (regex.test(sqlQuery) ? 1 : 0), 0);
+                likelihood *= uniqueStructureMatches > 0 ? uniqueStructureMatches : 0.1;
+            }
+
+            return likelihood;
+        }
+
+        detectSQLDialects(sqlQuery) {
+            if (!sqlQuery) return [{ dialect: 'Unknown', percentage: 100 }];
+
+            sqlQuery = sqlQuery.trim().toUpperCase();
+            let posteriorProbabilities = {};
+
+            // Calculate the posterior probabilities for each dialect
+            Object.keys(this.priorProbabilities).forEach(dialect => {
+                const likelihood = this.calculateLikelihood(sqlQuery, dialect);
+                const prior = this.priorProbabilities[dialect];
+                posteriorProbabilities[dialect] = likelihood * prior;
+            });
+
+            // Normalize the posterior probabilities
+            const total = Object.values(posteriorProbabilities).reduce((sum, p) => sum + p, 0);
+            if (total > 0) {
+                Object.keys(posteriorProbabilities).forEach(dialect => {
+                    posteriorProbabilities[dialect] /= total;
+                });
+            }
+
+            // Convert to percentage and sort by most probable dialects
+            const sortedDialects = Object.entries(posteriorProbabilities)
+                .sort(([, a], [, b]) => b - a)
+                .map(([dialect, probability]) => ({
+                    dialect: dialect,
+                    percentage: Math.round(probability * 100)
+                }));
+
+            return sortedDialects.length > 0 ? sortedDialects : [{ dialect: 'Unknown', percentage: 100 }];
+        }
+    }
+
+    return SQLDialectDetector;
+}));

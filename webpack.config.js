@@ -2,11 +2,11 @@ const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
-    entry: './src/index.js',
+    entry: './src/SQLDialectDetector.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'auto-fit-grid-1.0.1.min.js',
-        library: 'AutoFitGrid',
+        filename: 'sql-dialect-detector.1.0.1.min.js',
+        library: 'SQLDialectDetector',
         libraryTarget: 'umd',
     },
     module: {

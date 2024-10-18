@@ -1,198 +1,99 @@
+# SQL Dialect Detector
 
-# AutoFitGrid
-
-AutoFitGrid is a robust JavaScript library for dynamically adjusting grid column widths based on content. It ensures that columns are optimally sized to fit their content, improving the layout and readability of grid-based interfaces.
+SQL Dialect Detector is a powerful JavaScript library that detects the SQL dialect used in a given SQL query. It supports various SQL databases including PostgreSQL, MySQL, Oracle, SQL Server, SQLite, Amazon Redshift, Google BigQuery, and many more.
 
 ## Features
 
-- Dynamic column width adjustment
-- Support for various data types including text, email, date, and number
-- Option to distribute remaining space equally across columns
-- Customizable wrap ratios for different data types
-- Fixed-width columns support
-- Easy to integrate and configure
+- Detects the SQL dialect based on keywords, built-in functions, and unique SQL structures.
+- Supports a wide range of databases including:
+    - PostgreSQL
+    - MySQL
+    - SQL Server
+    - Oracle
+    - SQLite
+    - Amazon Redshift
+    - Google BigQuery
+    - IBM Db2
+    - Apache Hive
+    - Couchbase (N1QL)
+    - SingleStoreDB
+    - Snowflake
+    - Apache Spark
+    - Trino
+    - Amazon Athena
+- Provides a confidence level for each detected dialect.
+- Lightweight and easy to integrate.
 
 ## Installation
 
-You can install AutoFitGrid using npm:
+To install the library, use npm:
 
-```sh
-npm install auto-fit-grid
+```bash
+npm install sql-dialect-detector
 ```
-
-## Example
-
-https://autofitgrid.codeutility.io
-
-![AutoFitGrid Example](example.png)
 
 ## Usage
 
-### Basic Usage
+Here's a simple example of how to use SQL Dialect Detector in your project:
 
-First, include the AutoFitGrid script in your HTML file:
+```javascript
+import SQLDialectDetector from 'sql-dialect-detector';
+
+const sqlQuery = `
+SELECT COUNT(*) FROM users WHERE created_at > '2023-01-01';
+`;
+
+const detector = new SQLDialectDetector();
+const detectedDialects = detector.detectSQLDialects(sqlQuery);
+
+console.log(detectedDialects);
+```
+
+## Example HTML Integration
+
+You can integrate the library into an HTML page as follows:
 
 ```html
-<script src="node_modules/auto-fit-grid/dist/auto-fit-grid-1.0.1.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Dialect Detector Test</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>SQL Dialect Detector</h1>
+    <textarea id="sql-query" name="sql-query"></textarea>
+    <button onclick="detectDialect()">Detect SQL Dialect</button>
+    <div id="detected-dialects"></div>
+  </div>
+
+  <script src="dist/sql-dialect-detector.min.js"></script>
+  <script>
+    function detectDialect() {
+      const sqlQuery = document.getElementById('sql-query').value;
+      const detector = new SQLDialectDetector();
+      const detectedDialects = detector.detectSQLDialects(sqlQuery);
+
+      document.getElementById('detected-dialects').textContent = JSON.stringify(detectedDialects, null, 2);
+    }
+  </script>
+</body>
+</html>
 ```
 
-Next, create a grid container with header and column elements:
+## Configuration
 
-```html
-<div class="grid-container">
-    <div class="grid-header" data-type="text">Company Name</div>
-    <div class="grid-header" data-type="text">Country</div>
-    <div class="grid-header" data-type="email">Email</div>
-    <div class="grid-header" data-type="date">Established Date</div>
-    <div class="grid-header" data-type="number">Revenue</div>
-
-    <div class="grid-item">OpenAI, Inc.</div>
-    <div class="grid-item">USA</div>
-    <div class="grid-item">contact@openai.com</div>
-    <div class="grid-item">2024-07-26</div>
-    <div class="grid-item">$100,000,000</div>
-</div>
-```
-
-Then, initialize AutoFitGrid for your grid container:
-
-```javascript
-document.addEventListener('DOMContentLoaded', function() {
-    new AutoFitGrid({
-        container: document.querySelector('.grid-container'), // Required
-        headerSelector: '.grid-header', // Required
-        columnSelector: '.grid-item', // Required
-
-        defaultWrapRatios: { // Optional, default: { text: 4.5, date: 8.0, datetime: 7.0, number: 7.0, email: 12.0 }
-            text: 4.5,
-            date: 8.0,
-            datetime: 7.0,
-            number: 7.0,
-            email: 12.0,
-        },
-        defaultMinWidth: 50, // Optional, default: 50
-        defaultMaxWidth: Infinity, // Optional, default: Infinity
-        adjustmentThreshold: 200, // Optional, default: 200
-        distributeRemainingSpace: true // Optional, default: true
-    });
-});
-```
-
-### Using AutoFitGrid in ReactJS
-
-First, install AutoFitGrid using npm:
-
-```sh
-npm install auto-fit-grid
-```
-
-Then, import and use it in your React component:
-
-```javascript
-import React, { useEffect, useRef } from 'react';
-import AutoFitGrid from 'auto-fit-grid';
-
-const GridComponent = () => {
-    const gridContainerRef = useRef(null);
-
-    useEffect(() => {
-        if (gridContainerRef.current) {
-            new AutoFitGrid({
-                container: gridContainerRef.current,
-                headerSelector: '.grid-header',
-                columnSelector: '.grid-item',
-            });
-        }
-    }, []);
-
-    return (
-        <div className="grid-container" ref={gridContainerRef} data-distribute-remaining-space="true">
-            <div className="grid-header" data-type="text">Company Name</div>
-            <div className="grid-header" data-type="text">Country</div>
-            <div className="grid-header" data-type="email">Email</div>
-            <div className="grid-header" data-type="date">Established Date</div>
-            <div className="grid-header" data-type="number">Revenue</div>
-
-            <div className="grid-item">OpenAI, Inc.</div>
-            <div className="grid-item">USA</div>
-            <div className="grid-item">contact@openai.com</div>
-            <div className="grid-item">2024-07-26</div>
-            <div className="grid-item">$100,000,000</div>
-        </div>
-    );
-};
-
-export default GridComponent;
-```
-
-### Using AutoFitGrid in AngularJS
-
-First, install AutoFitGrid using npm:
-
-```sh
-npm install auto-fit-grid
-```
-
-Then, import and use it in your Angular component:
-
-```javascript
-import angular from 'angular';
-import AutoFitGrid from 'auto-fit-grid';
-
-const app = angular.module('gridApp', []);
-
-app.controller('GridController', ['$scope', '$element', function($scope, $element) {
-    $scope.$on('$viewContentLoaded', function() {
-        new AutoFitGrid({
-            container: $element[0].querySelector('.grid-container'),
-            headerSelector: '.grid-header',
-            columnSelector: '.grid-item',
-        });
-    });
-}]);
-
-app.component('gridComponent', {
-    template: `
-        <div class="grid-container" data-distribute-remaining-space="true">
-            <div class="grid-header" data-type="text">Company Name</div>
-            <div class="grid-header" data-type="text">Country</div>
-            <div class="grid-header" data-type="email">Email</div>
-            <div class="grid-header" data-type="date">Established Date</div>
-            <div class="grid-header" data-type="number">Revenue</div>
-
-            <div class="grid-item">OpenAI, Inc.</div>
-            <div class="grid-item">USA</div>
-            <div class="grid-item">contact@openai.com</div>
-            <div class="grid-item">2024-07-26</div>
-            <div class="grid-item">$100,000,000</div>
-        </div>
-    `,
-    controller: 'GridController'
-});
-```
-
-### Options
-
-- `container`: The grid container element (required).
-- `defaultWrapRatios`: Object defining wrap ratios for different data types (optional).
-- `defaultMinWidth`: Default minimum width for columns (optional).
-- `defaultMaxWidth`: Default maximum width for columns (optional).
-- `adjustmentThreshold`: Threshold for width adjustment in pixels (optional).
-- `headerSelector`: CSS selector for header elements (optional).
-- `columnSelector`: CSS selector for column elements (optional).
-- `showDebug`: Boolean to enable or disable debug logging (optional).
-- `distributeRemainingSpace`: Boolean to enable or disable distribution of remaining space (optional).
+You can configure the library with different settings to optimize detection accuracy for your use case.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
-Hien Tran
-
-## Links
-
-- [NPM](https://www.npmjs.com/package/auto-fit-grid)
-- [GitHub Repository](https://github.com/dinhhientran/auto-fit-grid)
-- [README](https://github.com/dinhhientran/auto-fit-grid/blob/main/README.md)
+**Hien Tran**
